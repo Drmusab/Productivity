@@ -88,24 +88,22 @@ router.post('/report-schedule', [
 
   try {
     const { day, hour, minute } = req.body;
-    
+
+    // Ensure settings exist even on first-time configuration
+    const upsertSetting = async (key, value) => {
+      await runAsync(
+        `INSERT INTO settings (key, value) VALUES (?, ?)
+         ON CONFLICT(key) DO UPDATE SET value = excluded.value, updated_at = CURRENT_TIMESTAMP`,
+        [key, value.toString()]
+      );
+    };
+
     // Update all three settings
-    await runAsync(
-      'UPDATE settings SET value = ?, updated_at = CURRENT_TIMESTAMP WHERE key = ?',
-      [day.toString(), 'report_schedule_day']
-    );
-    
-    await runAsync(
-      'UPDATE settings SET value = ?, updated_at = CURRENT_TIMESTAMP WHERE key = ?',
-      [hour.toString(), 'report_schedule_hour']
-    );
-    
-    await runAsync(
-      'UPDATE settings SET value = ?, updated_at = CURRENT_TIMESTAMP WHERE key = ?',
-      [minute.toString(), 'report_schedule_minute']
-    );
-    
-    res.json({ 
+    await upsertSetting('report_schedule_day', day);
+    await upsertSetting('report_schedule_hour', hour);
+    await upsertSetting('report_schedule_minute', minute);
+
+    res.json({
       message: 'Report schedule updated successfully. Server restart required for changes to take effect.',
       schedule: { day, hour, minute }
     });
