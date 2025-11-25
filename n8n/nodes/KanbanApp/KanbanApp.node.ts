@@ -14,7 +14,7 @@ export class KanbanApp implements INodeType {
 	description: INodeTypeDescription = {
 		displayName: 'Kanban App',
 		name: 'kanbanApp',
-		icon: 'file:kanban.svg',
+                icon: 'file:kanbanApp.svg',
 		group: ['productivity'],
 		version: 1,
 		subtitle: '={{$parameter["operation"] + ": " + $parameter["resource"]}}',
@@ -243,20 +243,35 @@ export class KanbanApp implements INodeType {
 				description: 'ID of the board',
 			},
 
-			{
-				displayName: 'Board ID',
-				name: 'boardId',
-				type: 'number',
-				displayOptions: {
-					show: {
-						resource: ['column'],
-						operation: ['create', 'getAll'],
-					},
-				},
-				default: '',
-				required: true,
-				description: 'ID of the board',
-			},
+                        {
+                                displayName: 'Board ID',
+                                name: 'boardId',
+                                type: 'number',
+                                displayOptions: {
+                                        show: {
+                                                resource: ['column'],
+                                                operation: ['create', 'getAll', 'update'],
+                                        },
+                                },
+                                default: '',
+                                required: true,
+                                description: 'ID of the board',
+                        },
+
+                        {
+                                displayName: 'Column ID',
+                                name: 'columnId',
+                                type: 'number',
+                                displayOptions: {
+                                        show: {
+                                                resource: ['column'],
+                                                operation: ['update'],
+                                        },
+                                },
+                                default: '',
+                                required: true,
+                                description: 'ID of the column to update',
+                        },
 
 			// Task creation fields
 			{
@@ -426,19 +441,26 @@ export class KanbanApp implements INodeType {
 						operation: ['create', 'update'],
 					},
 				},
-				options: [
-					{
-						displayName: 'Description',
-						name: 'description',
-						type: 'string',
-						default: '',
-						description: 'Description of the board',
-					},
-					{
-						displayName: 'Template',
-						name: 'template',
-						type: 'options',
-						options: [
+                                options: [
+                                        {
+                                                displayName: 'Description',
+                                                name: 'description',
+                                                type: 'string',
+                                                default: '',
+                                                description: 'Description of the board',
+                                        },
+                                        {
+                                                displayName: 'Name',
+                                                name: 'name',
+                                                type: 'string',
+                                                default: '',
+                                                description: 'New name of the board',
+                                        },
+                                        {
+                                                displayName: 'Template',
+                                                name: 'template',
+                                                type: 'options',
+                                                options: [
 							{
 								name: 'Simple',
 								value: 'simple',
@@ -711,16 +733,19 @@ export class KanbanApp implements INodeType {
 
 						const body: any = {};
 
-						if (additionalFields.name) {
-							body.name = additionalFields.name;
-						}
-						if (additionalFields.description) {
-							body.description = additionalFields.description;
-						}
+                                                if (additionalFields.name) {
+                                                        body.name = additionalFields.name;
+                                                }
+                                                if (additionalFields.description) {
+                                                        body.description = additionalFields.description;
+                                                }
+                                                if (additionalFields.template) {
+                                                        body.template = additionalFields.template;
+                                                }
 
-						responseData = await kanbanApiRequest.call(this, 'PUT', `/boards/${boardId}`, body);
-					}
-				}
+                                                responseData = await kanbanApiRequest.call(this, 'PUT', `/boards/${boardId}`, body);
+                                        }
+                                }
 
 				if (resource === 'column') {
 					if (operation === 'create') {
