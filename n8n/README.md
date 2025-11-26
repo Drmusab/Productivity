@@ -174,17 +174,20 @@ npm install
 npm run build
 ```
 
-This creates compiled JavaScript files in the `dist/` directory.
+This creates compiled JavaScript files in the `dist/` directory and type definitions that n8n can load directly from the package entry point.
 
 #### Step 2: Copy to n8n Custom Nodes Directory
+
+Copy the **entire** package (including `package.json`) so n8n can resolve the `dist/index.js` entry point.
 
 **On Linux/macOS:**
 ```bash
 # Create custom nodes directory if it doesn't exist
-mkdir -p ~/.n8n/custom
+mkdir -p ~/.n8n/custom/n8n-nodes-kanban-app
 
-# Copy the entire built node
-cp -r dist ~/.n8n/custom/n8n-nodes-kanban-app
+# Copy the package manifest and build output
+cp package.json ~/.n8n/custom/n8n-nodes-kanban-app/
+cp -r dist ~/.n8n/custom/n8n-nodes-kanban-app/dist
 ```
 
 **On Windows:**
@@ -192,8 +195,10 @@ cp -r dist ~/.n8n/custom/n8n-nodes-kanban-app
 # Create custom nodes directory
 New-Item -Path "$env:USERPROFILE\.n8n\custom" -ItemType Directory -Force
 
-# Copy the built node
-Copy-Item -Path "dist\*" -Destination "$env:USERPROFILE\.n8n\custom\n8n-nodes-kanban-app" -Recurse
+# Copy the built node and manifest
+New-Item -Path "$env:USERPROFILE\.n8n\custom\n8n-nodes-kanban-app" -ItemType Directory -Force
+Copy-Item -Path "package.json" -Destination "$env:USERPROFILE\.n8n\custom\n8n-nodes-kanban-app" -Force
+Copy-Item -Path "dist" -Destination "$env:USERPROFILE\.n8n\custom\n8n-nodes-kanban-app" -Recurse -Force
 ```
 
 #### Step 3: Restart n8n
@@ -249,14 +254,14 @@ Create a symbolic link for live development:
 # Create custom nodes directory
 mkdir -p ~/.n8n/custom
 
-# Create symlink
-ln -s "$(pwd)/dist" ~/.n8n/custom/n8n-nodes-kanban-app
+# Create symlink to the package root so n8n sees package.json and dist
+ln -s "$(pwd)" ~/.n8n/custom/n8n-nodes-kanban-app
 ```
 
 **On Windows (as Administrator):**
 ```powershell
 # Create symlink
-New-Item -ItemType SymbolicLink -Path "$env:USERPROFILE\.n8n\custom\n8n-nodes-kanban-app" -Target "$(Get-Location)\dist"
+New-Item -ItemType SymbolicLink -Path "$env:USERPROFILE\.n8n\custom\n8n-nodes-kanban-app" -Target "$(Get-Location)"
 ```
 
 #### Step 4: Restart n8n
