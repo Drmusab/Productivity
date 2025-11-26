@@ -8,7 +8,8 @@ import {
   IconButton,
   Menu,
   MenuItem,
-  Divider
+  Divider,
+  CircularProgress
 } from '@mui/material';
 import {
   Add,
@@ -23,7 +24,7 @@ import { DragDropContext, Droppable, Draggable } from 'react-beautiful-dnd';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 
-import { getTasks, updateTask, createTask } from '../services/taskService';
+import { getTasks, updateTask, createTask, deleteTask } from '../services/taskService';
 import {
   getBoard,
   updateColumn,
@@ -276,6 +277,42 @@ const Board = () => {
     }
   };
 
+  const handleDeleteTask = async (taskId) => {
+    try {
+      const deletedBy = 1; // TODO: Get current user ID from auth context
+      await deleteTask(taskId, deletedBy);
+      showSuccess('تم حذف المهمة بنجاح');
+      
+      await refreshTasks();
+      broadcastTasksChange();
+      
+      setTaskDialogOpen(false);
+      setSelectedTask(null);
+    } catch (error) {
+      showError('فشل حذف المهمة');
+    }
+  };
+
+  const handleDuplicateTask = async (task) => {
+    try {
+      const duplicatedTask = {
+        ...task,
+        id: undefined,
+        title: `${task.title} (Copy)`,
+        created_at: undefined,
+        updated_at: undefined
+      };
+      
+      await createTask(duplicatedTask);
+      showSuccess('تم تكرار المهمة بنجاح');
+      
+      await refreshTasks();
+      broadcastTasksChange();
+    } catch (error) {
+      showError('فشل تكرار المهمة');
+    }
+  };
+
   const handleAddColumn = () => {
     setSelectedColumn({
       name: '',
@@ -424,11 +461,40 @@ const Board = () => {
   };
 
   if (loading) {
-    return <Typography>جاري تحميل اللوحة...</Typography>;
+    return (
+      <Box 
+        sx={{ 
+          display: 'flex', 
+          justifyContent: 'center', 
+          alignItems: 'center', 
+          minHeight: '60vh' 
+        }}
+      >
+        <Box sx={{ textAlign: 'center' }}>
+          <CircularProgress size={60} />
+          <Typography variant="h6" sx={{ mt: 2 }}>
+            جاري تحميل اللوحة...
+          </Typography>
+        </Box>
+      </Box>
+    );
   }
 
   if (!board) {
-    return <Typography>لم يتم العثور على اللوحة</Typography>;
+    return (
+      <Box 
+        sx={{ 
+          display: 'flex', 
+          justifyContent: 'center', 
+          alignItems: 'center', 
+          minHeight: '60vh' 
+        }}
+      >
+        <Typography variant="h6" color="error">
+          لم يتم العثور على اللوحة
+        </Typography>
+      </Box>
+    );
   }
 
   const tasksByColumnAndSwimlane = groupTasksByColumnAndSwimlane(board, tasks);
@@ -589,6 +655,8 @@ const Board = () => {
                                               task={task}
                                               index={index}
                                               onEdit={handleEditTask}
+                                              onDelete={handleDeleteTask}
+                                              onDuplicate={handleDuplicateTask}
                                             />
                                           </Box>
                                         )}
@@ -632,6 +700,8 @@ const Board = () => {
                                         task={task}
                                         index={index}
                                         onEdit={handleEditTask}
+                                        onDelete={handleDeleteTask}
+                                        onDuplicate={handleDuplicateTask}
                                       />
                                     </Box>
                                   )}
@@ -657,6 +727,7 @@ const Board = () => {
         open={taskDialogOpen}
         task={selectedTask}
         onSave={handleSaveTask}
+        onDelete={handleDeleteTask}
         availableColumns={availableColumns}
         availableSwimlanes={availableSwimlanes}
         availableTags={availableTags}

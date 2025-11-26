@@ -5,6 +5,7 @@ import CssBaseline from '@mui/material/CssBaseline';
 import { SnackbarProvider } from 'notistack';
 
 import Navbar from './components/Navbar';
+import ErrorBoundary from './components/ErrorBoundary';
 import Board from './pages/Board';
 import Boards from './pages/Boards';
 import Settings from './pages/Settings';
@@ -57,16 +58,18 @@ function App() {
   }, []);
 
   return (
-    <ThemeProvider theme={theme}>
-      <CssBaseline />
-      <SnackbarProvider maxSnack={3}>
-        <AuthProvider>
-          <NotificationProvider>
-            <AppRoutes />
-          </NotificationProvider>
-        </AuthProvider>
-      </SnackbarProvider>
-    </ThemeProvider>
+    <ErrorBoundary>
+      <ThemeProvider theme={theme}>
+        <CssBaseline />
+        <SnackbarProvider maxSnack={3}>
+          <AuthProvider>
+            <NotificationProvider>
+              <AppRoutes />
+            </NotificationProvider>
+          </AuthProvider>
+        </SnackbarProvider>
+      </ThemeProvider>
+    </ErrorBoundary>
   );
 }
 

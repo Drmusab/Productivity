@@ -17,6 +17,8 @@ const reportRoutes = require('./routes/reports');
 const routineRoutes = require('./routes/routines');
 const settingsRoutes = require('./routes/settings');
 const { startScheduler } = require('./services/scheduler');
+const { requestTimer } = require('./middleware/performance');
+const logger = require('./utils/logger');
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -27,6 +29,11 @@ app.use(cors({
   origin: process.env.FRONTEND_URL || 'http://localhost:3000',
   credentials: true
 }));
+
+// Performance monitoring
+if (process.env.NODE_ENV !== 'test') {
+  app.use(requestTimer);
+}
 
 // Rate limiting
 const limiter = rateLimit({
@@ -55,25 +62,34 @@ app.use('/api/reports', reportRoutes);
 app.use('/api/routines', routineRoutes);
 app.use('/api/settings', settingsRoutes);
 
+const { errorHandler } = require('./middleware/errorHandler');
+
 // Health check endpoint
 app.get('/api/health', (req, res) => {
   res.status(200).json({ status: 'OK', timestamp: new Date().toISOString() });
 });
 
-// Error handling middleware
-app.use((err, req, res, next) => {
-  console.error(err.stack);
-  res.status(500).json({ error: 'Something went wrong!' });
+// 404 handler
+app.use((req, res, next) => {
+  res.status(404).json({ 
+    error: 'Not Found',
+    message: `Cannot ${req.method} ${req.url}`,
+    statusCode: 404
+  });
 });
+
+// Error handling middleware (must be last)
+app.use(errorHandler);
 
 if (process.env.NODE_ENV !== 'test') {
   initDatabase().then(() => {
     app.listen(PORT, () => {
-      console.log(`Server running on port ${PORT}`);
+      logger.info(`Server running on port ${PORT}`);
+      logger.info(`Environment: ${process.env.NODE_ENV || 'development'}`);
       startScheduler();
     });
   }).catch(err => {
-    console.error('Failed to initialize database:', err);
+    logger.error('Failed to initialize database', { error: err.message });
     process.exit(1);
   });
 }

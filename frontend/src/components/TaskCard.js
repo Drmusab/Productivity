@@ -21,10 +21,12 @@ import {
 import { format } from 'date-fns';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
+import ConfirmDialog from './ConfirmDialog';
 
-const TaskCard = ({ task, index, onEdit }) => {
+const TaskCard = ({ task, index, onEdit, onDelete, onDuplicate }) => {
   const [anchorEl, setAnchorEl] = useState(null);
   const [showDescription, setShowDescription] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
   const handleMenuClick = (event) => {
     event.stopPropagation();
@@ -37,6 +39,25 @@ const TaskCard = ({ task, index, onEdit }) => {
 
   const handleEdit = () => {
     onEdit(task);
+    handleMenuClose();
+  };
+
+  const handleDelete = () => {
+    handleMenuClose();
+    setShowDeleteConfirm(true);
+  };
+
+  const confirmDelete = () => {
+    if (onDelete) {
+      onDelete(task.id);
+    }
+    setShowDeleteConfirm(false);
+  };
+
+  const handleDuplicate = () => {
+    if (onDuplicate) {
+      onDuplicate(task);
+    }
     handleMenuClose();
   };
 
@@ -59,13 +80,26 @@ const TaskCard = ({ task, index, onEdit }) => {
   const totalSubtasks = task.subtasks ? task.subtasks.length : 0;
 
   return (
+    <>
     <Card
       sx={{
         cursor: 'pointer',
         border: task.pinned ? '2px solid #3498db' : '1px solid #e0e0e0',
-        backgroundColor: task.pinned ? '#f8f9fa' : 'white'
+        backgroundColor: task.pinned ? '#f8f9fa' : 'white',
+        '&:hover': {
+          boxShadow: 3
+        }
       }}
       onClick={() => onEdit(task)}
+      role="button"
+      tabIndex={0}
+      aria-label={`Task: ${task.title}`}
+      onKeyPress={(e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          onEdit(task);
+        }
+      }}
     >
       <CardContent sx={{ p: 2, '&:last-child': { pb: 2 } }}>
         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
@@ -73,7 +107,12 @@ const TaskCard = ({ task, index, onEdit }) => {
             {task.title}
             {task.pinned && <PushPin sx={{ fontSize: 16, ml: 1, color: '#3498db' }} />}
           </Typography>
-          <IconButton size="small" onClick={handleMenuClick}>
+          <IconButton 
+            size="small" 
+            onClick={handleMenuClick}
+            aria-label="Task options"
+            aria-haspopup="true"
+          >
             <MoreVert />
           </IconButton>
         </Box>
@@ -187,15 +226,26 @@ const TaskCard = ({ task, index, onEdit }) => {
         anchorEl={anchorEl}
         open={Boolean(anchorEl)}
         onClose={handleMenuClose}
+        aria-label="Task actions menu"
       >
         <MenuItem onClick={handleEdit}>Edit</MenuItem>
         <Divider />
-        <MenuItem onClick={handleMenuClose}>Duplicate</MenuItem>
-        <MenuItem onClick={handleMenuClose}>Move</MenuItem>
+        {onDuplicate && <MenuItem onClick={handleDuplicate}>Duplicate</MenuItem>}
         <Divider />
-        <MenuItem onClick={handleMenuClose}>Delete</MenuItem>
+        {onDelete && <MenuItem onClick={handleDelete} sx={{ color: 'error.main' }}>Delete</MenuItem>}
       </Menu>
-    </Card>
+      
+      <ConfirmDialog
+        open={showDeleteConfirm}
+        title="Delete Task"
+        message={`Are you sure you want to delete "${task.title}"? This action cannot be undone.`}
+        confirmText="Delete"
+        cancelText="Cancel"
+        dangerous={true}
+        onConfirm={confirmDelete}
+        onCancel={() => setShowDeleteConfirm(false)}
+      />
+    </>
   );
 };
 

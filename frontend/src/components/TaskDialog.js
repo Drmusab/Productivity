@@ -30,12 +30,14 @@ import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
+import ConfirmDialog from './ConfirmDialog';
 
 const TaskDialog = ({
   open,
   task,
   onClose,
   onSave,
+  onDelete,
   availableColumns = [],
   availableSwimlanes = [],
   availableTags = [],
@@ -56,6 +58,7 @@ const TaskDialog = ({
   });
   const [newSubtask, setNewSubtask] = useState('');
   const [showMarkdownPreview, setShowMarkdownPreview] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
   useEffect(() => {
     if (task) {
@@ -159,6 +162,9 @@ const TaskDialog = ({
   };
 
   const handleSave = () => {
+    if (!formData.title.trim()) {
+      return;
+    }
     const dataToSave = {
       ...formData,
       due_date: formData.due_date ? formData.due_date.toISOString() : null,
@@ -167,7 +173,19 @@ const TaskDialog = ({
     onSave(dataToSave);
   };
 
+  const handleDelete = () => {
+    setShowDeleteConfirm(true);
+  };
+
+  const confirmDelete = () => {
+    if (task?.id && onDelete) {
+      onDelete(task.id);
+      setShowDeleteConfirm(false);
+    }
+  };
+
   return (
+    <>
     <Dialog open={open} onClose={onClose} maxWidth="md" fullWidth>
       <DialogTitle>
         {task?.id ? 'Edit Task' : 'Create New Task'}
@@ -456,12 +474,31 @@ const TaskDialog = ({
         </Grid>
       </DialogContent>
       <DialogActions>
+        <Box sx={{ flexGrow: 1 }}>
+          {task?.id && onDelete && (
+            <Button onClick={handleDelete} color="error">
+              Delete
+            </Button>
+          )}
+        </Box>
         <Button onClick={onClose}>Cancel</Button>
-        <Button onClick={handleSave} variant="contained">
+        <Button onClick={handleSave} variant="contained" disabled={!formData.title.trim()}>
           {task?.id ? 'Update' : 'Create'}
         </Button>
       </DialogActions>
     </Dialog>
+    
+    <ConfirmDialog
+      open={showDeleteConfirm}
+      title="Delete Task"
+      message={`Are you sure you want to delete "${formData.title}"? This action cannot be undone.`}
+      confirmText="Delete"
+      cancelText="Cancel"
+      dangerous={true}
+      onConfirm={confirmDelete}
+      onCancel={() => setShowDeleteConfirm(false)}
+    />
+    </>
   );
 };
 
