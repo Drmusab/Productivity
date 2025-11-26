@@ -18,7 +18,8 @@
 		"type": "git",
 		"url": "git+https://github.com/Drmusab/Kanban-Routine-Manager.git"
 	},
-	"main": "index.js",
+        "main": "dist/index.js",
+        "types": "dist/index.d.ts",
 	"scripts": {
 		"build": "tsc && gulp build:icons",
 		"dev": "tsc --watch",
