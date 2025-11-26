@@ -1,0 +1,13 @@
+node_modules
+.git
+.gitignore
+*.md
+.eslintrc.js
+gulpfile.js
+tsconfig.json
+types
+# Exclude TypeScript source files - only pre-built dist folder is needed for Docker
+credentials/*.ts
+nodes/**/*.ts
+index.ts
+package-lock.json

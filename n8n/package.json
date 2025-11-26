@@ -23,9 +23,9 @@
 	"scripts": {
 		"build": "tsc && gulp build:icons",
 		"dev": "tsc --watch",
-		"format": "prettier nodes --write",
-		"lint": "eslint nodes package.json",
-		"lintfix": "eslint nodes package.json --fix",
+		"format": "prettier nodes credentials --write",
+		"lint": "eslint \"**/*.ts\" --ignore-pattern dist",
+		"lintfix": "eslint \"**/*.ts\" --ignore-pattern dist --fix",
 		"prepublishOnly": "npm run build && npm run lint -s"
 	},
 	"files": [
@@ -48,6 +48,7 @@
 		"@types/node": "^20.19.25",
 		"@typescript-eslint/parser": "^5.45.0",
 		"axios": "^1.13.2",
+		"eslint": "^8.57.1",
 		"eslint-plugin-n8n-nodes-base": "^1.11.0",
 		"express": "^5.1.0",
 		"form-data": "^4.0.5",

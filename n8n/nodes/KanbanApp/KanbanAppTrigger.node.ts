@@ -12,7 +12,7 @@ export class KanbanAppTrigger implements INodeType {
 	description: INodeTypeDescription = {
 		displayName: 'Kanban App Trigger',
 		name: 'kanbanAppTrigger',
-		icon: 'file:kanban.svg',
+		icon: 'file:kanbanApp.svg',
 		group: ['trigger'],
 		version: 1,
 		description: 'Triggers on Kanban app events',

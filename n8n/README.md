@@ -138,8 +138,10 @@ docker-compose up -d
 
 This command will:
 - Build the Kanban backend, frontend, and n8n containers
-- Automatically install the Kanban App custom node in n8n
+- Automatically build and install the Kanban App custom node in n8n
 - Start all services with proper networking
+
+**Note:** The n8n custom node is pre-built and included in the Docker image. If you make changes to the node, rebuild it first with `cd n8n && ./build.sh` before running `docker-compose up --build`.
 
 #### Step 4: Access n8n
 
@@ -170,6 +172,11 @@ Navigate to the n8n directory and build the node:
 
 ```bash
 cd Kanban-style-task/n8n
+
+# Option 1: Use the build script (recommended)
+./build.sh
+
+# Option 2: Manual build
 npm install
 npm run build
 ```
