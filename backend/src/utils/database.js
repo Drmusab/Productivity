@@ -1,13 +1,22 @@
+/**
+ * @fileoverview Database utility module for SQLite database management.
+ * Provides promise-based wrappers for SQLite operations and handles database initialization,
+ * schema creation, and default data seeding for the Kanban task management application.
+ * @module utils/database
+ */
+
 const sqlite3 = require('sqlite3').verbose();
 const path = require('path');
 const fs = require('fs');
 const bcrypt = require('bcryptjs');
 
+// Database path configuration
 const DEFAULT_DB_PATH = path.join(__dirname, '../../data/kanban.db');
 const configuredPath = process.env.DATABASE_PATH || DEFAULT_DB_PATH;
 const isInMemoryDatabase = configuredPath === ':memory:' || configuredPath === 'memory';
 const resolvedPath = isInMemoryDatabase ? ':memory:' : configuredPath;
 
+// Create data directory if it doesn't exist (for file-based database)
 if (!isInMemoryDatabase) {
   const dataDir = path.dirname(resolvedPath);
   if (!fs.existsSync(dataDir)) {
@@ -15,8 +24,23 @@ if (!isInMemoryDatabase) {
   }
 }
 
+// Initialize SQLite database connection
 const db = new sqlite3.Database(resolvedPath);
 
+/**
+ * Executes a SQL statement that modifies the database (INSERT, UPDATE, DELETE, CREATE, etc.).
+ * Returns a promise that resolves with the result object containing lastID and changes.
+ * 
+ * @async
+ * @function runAsync
+ * @param {string} sql - The SQL statement to execute
+ * @param {Array} [params=[]] - Array of parameters for parameterized queries
+ * @returns {Promise<Object>} Promise resolving to result object with lastID and changes properties
+ * @throws {Error} Database error if the query fails
+ * @example
+ * const result = await runAsync('INSERT INTO tasks (title) VALUES (?)', ['New Task']);
+ * console.log(result.lastID); // ID of inserted row
+ */
 const runAsync = (sql, params = []) => {
   return new Promise((resolve, reject) => {
     db.run(sql, params, function(err) {
@@ -29,6 +53,20 @@ const runAsync = (sql, params = []) => {
   });
 };
 
+/**
+ * Executes a SQL query that returns a single row.
+ * Returns a promise that resolves with the first row or undefined if no rows match.
+ * 
+ * @async
+ * @function getAsync
+ * @param {string} sql - The SQL query to execute
+ * @param {Array} [params=[]] - Array of parameters for parameterized queries
+ * @returns {Promise<Object|undefined>} Promise resolving to the first row object or undefined
+ * @throws {Error} Database error if the query fails
+ * @example
+ * const task = await getAsync('SELECT * FROM tasks WHERE id = ?', [1]);
+ * console.log(task.title);
+ */
 const getAsync = (sql, params = []) => {
   return new Promise((resolve, reject) => {
     db.get(sql, params, (err, row) => {
@@ -41,6 +79,20 @@ const getAsync = (sql, params = []) => {
   });
 };
 
+/**
+ * Executes a SQL query that returns multiple rows.
+ * Returns a promise that resolves with an array of row objects.
+ * 
+ * @async
+ * @function allAsync
+ * @param {string} sql - The SQL query to execute
+ * @param {Array} [params=[]] - Array of parameters for parameterized queries
+ * @returns {Promise<Array<Object>>} Promise resolving to an array of row objects
+ * @throws {Error} Database error if the query fails
+ * @example
+ * const tasks = await allAsync('SELECT * FROM tasks WHERE column_id = ?', [1]);
+ * tasks.forEach(task => console.log(task.title));
+ */
 const allAsync = (sql, params = []) => {
   return new Promise((resolve, reject) => {
     db.all(sql, params, (err, rows) => {
@@ -53,7 +105,20 @@ const allAsync = (sql, params = []) => {
   });
 };
 
-// Initialize database tables
+/**
+ * Initializes the database schema by creating all required tables, indexes, and default data.
+ * This function is idempotent and safe to call multiple times - it only creates tables
+ * that don't already exist. Also seeds default data including demo user, default board,
+ * columns, tags, and application settings.
+ * 
+ * @async
+ * @function initDatabase
+ * @returns {Promise<void>} Promise that resolves when database initialization is complete
+ * @throws {Error} Database error if table creation or data seeding fails
+ * @example
+ * await initDatabase();
+ * console.log('Database initialized successfully');
+ */
 const initDatabase = () => {
   return new Promise((resolve, reject) => {
     db.serialize(async () => {
@@ -309,6 +374,11 @@ const initDatabase = () => {
   });
 };
 
+/**
+ * Array defining the order in which database tables should be deleted.
+ * Ordered to respect foreign key constraints - child tables before parent tables.
+ * @constant {string[]}
+ */
 const TABLES_IN_DELETE_ORDER = [
   'automation_logs',
   'task_history',
@@ -325,6 +395,19 @@ const TABLES_IN_DELETE_ORDER = [
   'users'
 ];
 
+/**
+ * Clears all data from all database tables while preserving the schema.
+ * Deletes tables in reverse dependency order to avoid foreign key constraint violations.
+ * Useful for testing and data reset operations.
+ * 
+ * @async
+ * @function clearDatabase
+ * @returns {Promise<void>} Promise that resolves when all tables are cleared
+ * @throws {Error} Database error if deletion fails (except for non-existent tables)
+ * @example
+ * await clearDatabase();
+ * console.log('All database tables cleared');
+ */
 const clearDatabase = async () => {
   for (const table of TABLES_IN_DELETE_ORDER) {
     try {

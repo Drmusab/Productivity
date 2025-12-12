@@ -1,11 +1,22 @@
 /**
- * Performance monitoring middleware and utilities
+ * @fileoverview Performance monitoring middleware and utilities for tracking request timing and database queries.
+ * Provides request timing, execution measurement, and slow query detection.
+ * @module middleware/performance
  */
 
 const logger = require('../utils/logger');
 
 /**
- * Request timing middleware
+ * Express middleware that tracks request processing time and logs slow requests.
+ * Measures time from request start to response completion and logs warnings for slow requests (>1000ms).
+ * 
+ * @function requestTimer
+ * @param {Object} req - Express request object
+ * @param {Object} res - Express response object
+ * @param {Function} next - Express next middleware function
+ * @returns {void}
+ * @example
+ * app.use(requestTimer); // Register globally to track all requests
  */
 const requestTimer = (req, res, next) => {
   const startTime = Date.now();
@@ -38,7 +49,19 @@ const requestTimer = (req, res, next) => {
 };
 
 /**
- * Measure execution time of a function
+ * Measures and logs the execution time of an async function.
+ * Useful for profiling specific operations or service calls.
+ * 
+ * @async
+ * @function measureTime
+ * @param {string} name - Descriptive name for the operation being measured
+ * @param {Function} fn - Async function to execute and measure
+ * @returns {Promise<*>} Promise resolving to the result of the function
+ * @throws {Error} Re-throws any error from the function after logging
+ * @example
+ * const tasks = await measureTime('Fetch all tasks', async () => {
+ *   return await database.getAllTasks();
+ * });
  */
 const measureTime = async (name, fn) => {
   const startTime = Date.now();
@@ -63,9 +86,19 @@ const measureTime = async (name, fn) => {
 };
 
 /**
- * Database query performance tracker
+ * Database query performance tracking class.
+ * Tracks query execution times, identifies slow queries, and provides statistics.
+ * Can be enabled/disabled via ENABLE_QUERY_TRACKING environment variable.
+ * 
+ * @class QueryPerformanceTracker
  */
 class QueryPerformanceTracker {
+  /**
+   * Creates a QueryPerformanceTracker instance.
+   * Tracking is enabled in development or when ENABLE_QUERY_TRACKING=true.
+   * 
+   * @constructor
+   */
   constructor() {
     this.queries = [];
     // Make query tracking configurable via environment variable
@@ -73,6 +106,18 @@ class QueryPerformanceTracker {
                    process.env.NODE_ENV === 'development';
   }
   
+  /**
+   * Records a database query execution for performance analysis.
+   * Logs warnings for slow queries (>100ms) and maintains a circular buffer of recent queries.
+   * 
+   * @method track
+   * @param {string} query - The SQL query that was executed
+   * @param {Array} params - Query parameters used
+   * @param {number} duration - Execution time in milliseconds
+   * @returns {void}
+   * @example
+   * queryTracker.track('SELECT * FROM tasks WHERE id = ?', [123], 45);
+   */
   track(query, params, duration) {
     if (!this.enabled) return;
     
@@ -91,12 +136,27 @@ class QueryPerformanceTracker {
       });
     }
     
-    // Keep only last 100 queries
+    // Keep only last 100 queries (circular buffer)
     if (this.queries.length > 100) {
       this.queries.shift();
     }
   }
   
+  /**
+   * Calculates and returns statistical information about tracked queries.
+   * Provides average, min, max durations and slow query count.
+   * 
+   * @method getStats
+   * @returns {Object} Statistics object with query performance metrics
+   * @property {number} count - Total number of tracked queries
+   * @property {string} avgDuration - Average query duration with 'ms' suffix
+   * @property {string} maxDuration - Maximum query duration with 'ms' suffix
+   * @property {string} minDuration - Minimum query duration with 'ms' suffix
+   * @property {number} slowQueries - Count of queries exceeding 100ms
+   * @example
+   * const stats = queryTracker.getStats();
+   * console.log(`Average: ${stats.avgDuration}, Slow queries: ${stats.slowQueries}`);
+   */
   getStats() {
     if (!this.enabled || this.queries.length === 0) {
       return { message: 'No query data available' };
@@ -116,11 +176,24 @@ class QueryPerformanceTracker {
     };
   }
   
+  /**
+   * Clears all tracked query data.
+   * Useful for resetting statistics between test runs or monitoring periods.
+   * 
+   * @method reset
+   * @returns {void}
+   * @example
+   * queryTracker.reset(); // Clear all tracked queries
+   */
   reset() {
     this.queries = [];
   }
 }
 
+/**
+ * Global query performance tracker instance.
+ * @constant {QueryPerformanceTracker}
+ */
 const queryTracker = new QueryPerformanceTracker();
 
 module.exports = {
