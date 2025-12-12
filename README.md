@@ -24,6 +24,7 @@ Built with a modern tech stack featuring React, Node.js, Express, and SQLite.
   - [Automation & Integrations](#automation--integrations)
   - [Analytics & Reporting](#analytics--reporting)
 - [API Documentation](#api-documentation)
+- [Code Documentation](#code-documentation)
 - [Development Guide](#development-guide)
 - [Troubleshooting](#troubleshooting)
 - [Contributing](#contributing)
@@ -710,6 +711,53 @@ Navigate to **Analytics** from the main menu to view:
 3. Choose format (CSV, JSON)
 4. Select date range
 5. Click **Download**
+
+---
+
+## Code Documentation
+
+### Comprehensive Code Documentation
+
+For detailed documentation of every code file, function, and API in this application, see:
+
+📖 **[Complete Code Documentation](./docs/CODE_DOCUMENTATION.md)**
+
+This comprehensive guide includes:
+
+- **Backend Documentation**
+  - All utilities (database, logging, history tracking)
+  - All middleware (authentication, error handling, performance monitoring)
+  - All services (tasks, webhooks, notifications, reporting, automation, event bus, scheduler)
+  - All routes (tasks, boards, users, integrations, automation, sync, AI, reports, routines, settings)
+  
+- **Frontend Documentation**
+  - All components (TaskCard, TaskDialog, ColumnDialog, ErrorBoundary, etc.)
+  - All pages (Board, Boards, Analytics, Calendar, Login, Routines, Settings)
+  - All services (API client, task service, board service, automation service, etc.)
+  - All contexts (AuthContext, NotificationContext)
+  - All utilities (board utilities, date helpers)
+
+- **API Documentation**
+  - Complete REST API endpoint reference
+  - Request/response schemas
+  - Authentication methods
+  - Error codes and handling
+
+- **Additional Resources**
+  - Database schema documentation
+  - Testing documentation
+  - Deployment guide
+  - Security features
+  - Performance optimization
+
+### Inline Code Documentation
+
+All code files include comprehensive JSDoc comments with:
+- File-level `@fileoverview` descriptions
+- Function-level `@param`, `@returns`, and `@throws` documentation
+- Usage examples with `@example` tags
+- Type annotations for parameters and return values
+- Detailed explanations of complex algorithms
 
 ---
 

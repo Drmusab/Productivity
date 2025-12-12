@@ -1,13 +1,56 @@
+/**
+ * @fileoverview Reporting service for generating analytics and sending reports to webhooks.
+ * Provides weekly reports, custom date range reports, and productivity analytics.
+ * @module services/reporting
+ */
+
 const { allAsync, getAsync } = require('../utils/database');
 const { triggerWebhook } = require('./webhook');
 
-// Helper function to calculate completion rate
+/**
+ * Calculates completion rate as a percentage string.
+ * 
+ * @function calculateCompletionRate
+ * @param {number} completed - Number of completed tasks
+ * @param {number} total - Total number of tasks
+ * @returns {string} Percentage string (e.g., "72.50%")
+ * @private
+ * @example
+ * calculateCompletionRate(18, 25); // Returns "72.00%"
+ * calculateCompletionRate(0, 0);   // Returns "0%"
+ */
 const calculateCompletionRate = (completed, total) => {
   if (total === 0) return '0%';
   return ((completed / total) * 100).toFixed(2) + '%';
 };
 
-// Generate a weekly report
+/**
+ * Generates a comprehensive weekly report covering the last 7 days.
+ * Includes task statistics, completion rates, average completion time,
+ * tasks by column/priority, and most active boards.
+ * 
+ * @async
+ * @function generateWeeklyReport
+ * @returns {Promise<Object>} Weekly report object with period, summary, and detailed analytics
+ * @property {Object} period - Report period information
+ * @property {string} period.start - ISO 8601 start date
+ * @property {string} period.end - ISO 8601 end date
+ * @property {number} period.days - Number of days in period (always 7)
+ * @property {Object} summary - Summary statistics
+ * @property {number} summary.tasksCreated - Number of tasks created this week
+ * @property {number} summary.tasksCompleted - Number of tasks completed this week
+ * @property {number} summary.tasksOverdue - Number of currently overdue tasks
+ * @property {string} summary.completionRate - Completion rate percentage
+ * @property {string} summary.avgCompletionTimeHours - Average hours to complete tasks
+ * @property {Array<Object>} tasksByColumn - Task count by column
+ * @property {Array<Object>} tasksByPriority - Task count by priority
+ * @property {Array<Object>} activeBoards - Top 5 most active boards
+ * @throws {Error} Database error if report generation fails
+ * @example
+ * const report = await generateWeeklyReport();
+ * console.log(`Tasks completed: ${report.summary.tasksCompleted}`);
+ * console.log(`Completion rate: ${report.summary.completionRate}`);
+ */
 const generateWeeklyReport = async () => {
   const since = new Date();
   since.setDate(since.getDate() - 7);
@@ -116,7 +159,30 @@ const generateWeeklyReport = async () => {
   }
 };
 
-// Generate a custom date range report
+/**
+ * Generates a custom report for a specific date range.
+ * Includes tasks created, tasks completed, completion rate, and tasks by column.
+ * 
+ * @async
+ * @function generateCustomReport
+ * @param {string|Date} startDate - Start date for the report (ISO 8601 or Date object)
+ * @param {string|Date} endDate - End date for the report (ISO 8601 or Date object)
+ * @returns {Promise<Object>} Custom report object with period and summary statistics
+ * @property {Object} period - Report period information
+ * @property {string} period.start - ISO 8601 start date
+ * @property {string} period.end - ISO 8601 end date
+ * @property {number} period.days - Number of days in the period
+ * @property {Object} summary - Summary statistics
+ * @property {number} summary.tasksCreated - Tasks created in this period
+ * @property {number} summary.tasksCompleted - Tasks completed in this period
+ * @property {string} summary.completionRate - Completion rate percentage
+ * @property {Array<Object>} tasksByColumn - Task count grouped by column
+ * @throws {Error} Database error if report generation fails
+ * @example
+ * const report = await generateCustomReport('2024-01-01', '2024-01-31');
+ * console.log(`Period: ${report.period.days} days`);
+ * console.log(`Created: ${report.summary.tasksCreated}`);
+ */
 const generateCustomReport = async (startDate, endDate) => {
   const start = new Date(startDate).toISOString();
   const end = new Date(endDate).toISOString();
@@ -167,7 +233,25 @@ const generateCustomReport = async (startDate, endDate) => {
   }
 };
 
-// Send report to n8n webhooks
+/**
+ * Sends a generated report to all enabled n8n webhook integrations.
+ * Creates a standardized report payload and triggers all configured webhooks.
+ * 
+ * @async
+ * @function sendReportToN8n
+ * @param {Object} report - Report object from generateWeeklyReport or generateCustomReport
+ * @returns {Promise<Object>} Result object with success status and delivery details
+ * @property {boolean} success - True if at least one webhook was successful
+ * @property {string} message - Summary message of webhook delivery results
+ * @property {Array} [results] - Individual webhook delivery results
+ * @property {string} [error] - Error message if all webhooks failed
+ * @example
+ * const report = await generateWeeklyReport();
+ * const result = await sendReportToN8n(report);
+ * if (result.success) {
+ *   console.log(result.message); // "Report sent to 2 of 2 webhooks"
+ * }
+ */
 const sendReportToN8n = async (report) => {
   try {
     const integrations = await allAsync(
@@ -211,7 +295,27 @@ const sendReportToN8n = async (report) => {
   }
 };
 
-// Generate productivity analytics
+/**
+ * Generates productivity analytics for a specified number of days.
+ * Provides daily completion trends, user productivity stats, and task velocity.
+ * 
+ * @async
+ * @function generateProductivityAnalytics
+ * @param {number} [days=30] - Number of days to analyze (default: 30)
+ * @returns {Promise<Object>} Productivity analytics object
+ * @property {Object} period - Analysis period information
+ * @property {number} period.days - Number of days analyzed
+ * @property {string} period.start - ISO 8601 start date
+ * @property {string} period.end - ISO 8601 end date
+ * @property {Array<Object>} dailyCompletions - Tasks completed per day
+ * @property {Array<Object>} userProductivity - Tasks completed per user
+ * @property {Array<Object>} velocity - Tasks completed per week
+ * @throws {Error} Database error if analytics generation fails
+ * @example
+ * const analytics = await generateProductivityAnalytics(30);
+ * console.log(`Daily completions:`, analytics.dailyCompletions);
+ * console.log(`Top performers:`, analytics.userProductivity);
+ */
 const generateProductivityAnalytics = async (days = 30) => {
   const since = new Date();
   since.setDate(since.getDate() - days);
