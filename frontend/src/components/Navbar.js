@@ -20,7 +20,8 @@ import {
   Analytics,
   ExitToApp,
   Repeat,
-  CheckBox
+  CheckBox,
+  Today
 } from '@mui/icons-material';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
@@ -65,6 +66,14 @@ const Navbar = () => {
         
         {!isMobile && (
           <Box sx={{ display: 'flex', gap: 2 }}>
+            <Button
+              color="inherit"
+              startIcon={<Today />}
+              onClick={() => navigate('/planner')}
+              variant={location.pathname === '/planner' ? 'outlined' : 'text'}
+            >
+              المخطط اليومي
+            </Button>
             <Button
               color="inherit"
               startIcon={<Dashboard />}
@@ -148,6 +157,9 @@ const Navbar = () => {
           >
             {isMobile && (
               <>
+                <MenuItem onClick={() => handleNavigation('/planner')}>
+                  <Today sx={{ mr: 1 }} /> المخطط اليومي
+                </MenuItem>
                 <MenuItem onClick={() => handleNavigation('/boards')}>
                   <Dashboard sx={{ mr: 1 }} /> اللوحات
                 </MenuItem>

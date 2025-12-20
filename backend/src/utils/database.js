@@ -331,6 +331,64 @@ const initDatabase = () => {
           UNIQUE(habit_id, log_date)
         )`);
 
+        // Daily Planner tables
+        // Daily priorities table - stores top 3 priorities for each day
+        await runAsync(`CREATE TABLE IF NOT EXISTS daily_priorities (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          date DATE NOT NULL,
+          position INTEGER NOT NULL,
+          title TEXT NOT NULL,
+          completed BOOLEAN DEFAULT 0,
+          task_id INTEGER,
+          created_by INTEGER,
+          created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+          updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+          FOREIGN KEY (task_id) REFERENCES tasks (id) ON DELETE SET NULL,
+          FOREIGN KEY (created_by) REFERENCES users (id),
+          UNIQUE(date, position)
+        )`);
+
+        // Daily notes table - brain dump / free-form notes for each day
+        await runAsync(`CREATE TABLE IF NOT EXISTS daily_notes (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          date DATE NOT NULL UNIQUE,
+          content TEXT NOT NULL DEFAULT '',
+          created_by INTEGER,
+          created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+          updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+          FOREIGN KEY (created_by) REFERENCES users (id)
+        )`);
+
+        // Daily reflections table - end of day reflection responses
+        await runAsync(`CREATE TABLE IF NOT EXISTS daily_reflections (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          date DATE NOT NULL UNIQUE,
+          went_well TEXT DEFAULT '',
+          could_improve TEXT DEFAULT '',
+          key_takeaways TEXT DEFAULT '',
+          created_by INTEGER,
+          created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+          updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+          FOREIGN KEY (created_by) REFERENCES users (id)
+        )`);
+
+        // Time blocks table - time blocking schedule entries
+        await runAsync(`CREATE TABLE IF NOT EXISTS time_blocks (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          date DATE NOT NULL,
+          start_time TEXT NOT NULL,
+          end_time TEXT NOT NULL,
+          title TEXT NOT NULL,
+          description TEXT DEFAULT '',
+          color TEXT DEFAULT '#3498db',
+          task_id INTEGER,
+          created_by INTEGER,
+          created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+          updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+          FOREIGN KEY (task_id) REFERENCES tasks (id) ON DELETE SET NULL,
+          FOREIGN KEY (created_by) REFERENCES users (id)
+        )`);
+
         // Create indexes for better performance
         await runAsync('CREATE INDEX IF NOT EXISTS idx_tasks_column_id ON tasks(column_id)');
         await runAsync('CREATE INDEX IF NOT EXISTS idx_tasks_swimlane_id ON tasks(swimlane_id)');
@@ -339,6 +397,10 @@ const initDatabase = () => {
         await runAsync('CREATE INDEX IF NOT EXISTS idx_automation_logs_rule_id ON automation_logs(rule_id)');
         await runAsync('CREATE INDEX IF NOT EXISTS idx_habit_logs_habit_id ON habit_logs(habit_id)');
         await runAsync('CREATE INDEX IF NOT EXISTS idx_habit_logs_log_date ON habit_logs(log_date)');
+        await runAsync('CREATE INDEX IF NOT EXISTS idx_daily_priorities_date ON daily_priorities(date)');
+        await runAsync('CREATE INDEX IF NOT EXISTS idx_daily_notes_date ON daily_notes(date)');
+        await runAsync('CREATE INDEX IF NOT EXISTS idx_daily_reflections_date ON daily_reflections(date)');
+        await runAsync('CREATE INDEX IF NOT EXISTS idx_time_blocks_date ON time_blocks(date)');
 
         // Ensure a default demo user exists for first-run experience
         const userCount = await getAsync('SELECT COUNT(*) as count FROM users');
@@ -422,6 +484,10 @@ const TABLES_IN_DELETE_ORDER = [
   'attachments',
   'subtasks',
   'task_tags',
+  'time_blocks',
+  'daily_priorities',
+  'daily_notes',
+  'daily_reflections',
   'tasks',
   'swimlanes',
   'columns',
