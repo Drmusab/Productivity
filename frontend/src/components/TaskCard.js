@@ -221,6 +221,7 @@ const TaskCard = ({ task, index, onEdit, onDelete, onDuplicate }) => {
           </Box>
         )}
       </CardContent>
+    </Card>
       
       <Menu
         anchorEl={anchorEl}
