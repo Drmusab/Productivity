@@ -172,7 +172,40 @@ const initDatabase = () => {
           FOREIGN KEY (board_id) REFERENCES boards (id) ON DELETE CASCADE
         )`);
 
-        // Tasks table
+        // Projects table for OmniPlanner project management
+        await runAsync(`CREATE TABLE IF NOT EXISTS projects (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          name TEXT NOT NULL,
+          description TEXT,
+          goal TEXT,
+          status TEXT DEFAULT 'active',
+          progress INTEGER DEFAULT 0,
+          color TEXT DEFAULT '#3498db',
+          start_date DATETIME,
+          target_date DATETIME,
+          created_by INTEGER,
+          created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+          updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+          FOREIGN KEY (created_by) REFERENCES users (id)
+        )`);
+
+        // Contacts table for delegation and agenda management
+        await runAsync(`CREATE TABLE IF NOT EXISTS contacts (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          name TEXT NOT NULL,
+          email TEXT,
+          phone TEXT,
+          organization TEXT,
+          role TEXT,
+          contact_type TEXT DEFAULT 'personal',
+          notes TEXT,
+          created_by INTEGER,
+          created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+          updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+          FOREIGN KEY (created_by) REFERENCES users (id)
+        )`);
+
+        // Tasks table with GTD and Eisenhower Matrix fields
         await runAsync(`CREATE TABLE IF NOT EXISTS tasks (
           id INTEGER PRIMARY KEY AUTOINCREMENT,
           title TEXT NOT NULL,
@@ -188,10 +221,31 @@ const initDatabase = () => {
           assigned_to INTEGER,
           created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
           updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+          -- GTD Classification fields
+          gtd_status TEXT DEFAULT 'inbox',
+          context TEXT,
+          energy_required TEXT DEFAULT 'medium',
+          time_estimate INTEGER,
+          delegated_to TEXT,
+          -- Eisenhower Matrix fields
+          urgency BOOLEAN DEFAULT 0,
+          importance BOOLEAN DEFAULT 0,
+          action_date DATETIME,
+          deadline_date DATETIME,
+          -- Execution Tracking fields
+          execution_status TEXT DEFAULT 'backlog',
+          kanban_column TEXT DEFAULT 'todo',
+          progress_percentage INTEGER DEFAULT 0,
+          time_spent INTEGER DEFAULT 0,
+          completion_date DATETIME,
+          -- Categorization fields
+          project_id INTEGER,
+          category TEXT DEFAULT 'general',
           FOREIGN KEY (column_id) REFERENCES columns (id) ON DELETE CASCADE,
           FOREIGN KEY (swimlane_id) REFERENCES swimlanes (id) ON DELETE SET NULL,
           FOREIGN KEY (created_by) REFERENCES users (id),
-          FOREIGN KEY (assigned_to) REFERENCES users (id)
+          FOREIGN KEY (assigned_to) REFERENCES users (id),
+          FOREIGN KEY (project_id) REFERENCES projects (id) ON DELETE SET NULL
         )`);
 
         // Tags table
@@ -762,6 +816,14 @@ const initDatabase = () => {
         await runAsync('CREATE INDEX IF NOT EXISTS idx_fasting_records_date ON fasting_records(date)');
         await runAsync('CREATE INDEX IF NOT EXISTS idx_jumuah_checklist_date ON jumuah_checklist(date)');
         await runAsync('CREATE INDEX IF NOT EXISTS idx_spiritual_reflections_date ON spiritual_reflections(date)');
+        // OmniPlanner indexes - GTD and Eisenhower
+        await runAsync('CREATE INDEX IF NOT EXISTS idx_tasks_gtd_status ON tasks(gtd_status)');
+        await runAsync('CREATE INDEX IF NOT EXISTS idx_tasks_execution_status ON tasks(execution_status)');
+        await runAsync('CREATE INDEX IF NOT EXISTS idx_tasks_project_id ON tasks(project_id)');
+        await runAsync('CREATE INDEX IF NOT EXISTS idx_tasks_category ON tasks(category)');
+        await runAsync('CREATE INDEX IF NOT EXISTS idx_tasks_urgency_importance ON tasks(urgency, importance)');
+        await runAsync('CREATE INDEX IF NOT EXISTS idx_projects_status ON projects(status)');
+        await runAsync('CREATE INDEX IF NOT EXISTS idx_contacts_type ON contacts(contact_type)');
 
         // Ensure a default demo user exists for first-run experience
         const userCount = await getAsync('SELECT COUNT(*) as count FROM users');
@@ -943,6 +1005,9 @@ const TABLES_IN_DELETE_ORDER = [
   'swimlanes',
   'columns',
   'boards',
+  // OmniPlanner tables
+  'projects',
+  'contacts',
   'automation_rules',
   'integrations',
   'tags',
