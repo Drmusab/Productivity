@@ -31,12 +31,8 @@ import {
   PlayArrow,
   Schedule,
   HourglassEmpty,
-  Archive,
-  CheckCircle,
   Warning,
-  LowPriority,
   Delete,
-  Edit,
   ViewKanban,
   GridView,
   List,
@@ -70,16 +66,6 @@ const QUADRANTS = {
   eliminate: { label: 'Eliminate', color: '#95a5a6', icon: <Delete />, description: 'Neither' },
 };
 
-// GTD status configuration
-const GTD_STATUSES = {
-  inbox: { label: 'Inbox', color: '#e74c3c', icon: <Inbox /> },
-  next_actions: { label: 'Next Actions', color: '#2ecc71', icon: <PlayArrow /> },
-  waiting_for: { label: 'Waiting For', color: '#f39c12', icon: <HourglassEmpty /> },
-  someday_maybe: { label: 'Someday/Maybe', color: '#9b59b6', icon: <Schedule /> },
-  reference: { label: 'Reference', color: '#3498db', icon: <Archive /> },
-  done: { label: 'Done', color: '#27ae60', icon: <CheckCircle /> },
-};
-
 // Execution status configuration
 const EXECUTION_STATUSES = {
   backlog: { label: 'Backlog', color: '#95a5a6' },
@@ -103,7 +89,7 @@ const getPriorityColor = (priority) => {
 };
 
 // Task Card Component
-const TaskCard = ({ task, onProcess, onUpdateExecution, showQuadrant = false }) => {
+const TaskCard = ({ task, showQuadrant = false }) => {
   const quadrant = QUADRANTS[task.quadrant];
   
   return (
@@ -492,6 +478,8 @@ const OmniPlanner = () => {
     }
   };
 
+  // Handler for updating execution status (used for Kanban drag-drop)
+  // eslint-disable-next-line no-unused-vars
   const handleUpdateExecution = async (taskId, execution_status) => {
     try {
       await updateExecutionStatus(taskId, { execution_status });
