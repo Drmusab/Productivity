@@ -23,7 +23,8 @@ import {
   CheckBox,
   Today,
   FitnessCenter,
-  Mosque
+  Mosque,
+  ViewKanban
 } from '@mui/icons-material';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
@@ -68,6 +69,14 @@ const Navbar = () => {
         
         {!isMobile && (
           <Box sx={{ display: 'flex', gap: 2 }}>
+            <Button
+              color="inherit"
+              startIcon={<ViewKanban />}
+              onClick={() => navigate('/omniplanner')}
+              variant={location.pathname === '/omniplanner' ? 'outlined' : 'text'}
+            >
+              OmniPlanner
+            </Button>
             <Button
               color="inherit"
               startIcon={<Today />}
@@ -175,6 +184,9 @@ const Navbar = () => {
           >
             {isMobile && (
               <>
+                <MenuItem onClick={() => handleNavigation('/omniplanner')}>
+                  <ViewKanban sx={{ mr: 1 }} /> OmniPlanner
+                </MenuItem>
                 <MenuItem onClick={() => handleNavigation('/planner')}>
                   <Today sx={{ mr: 1 }} /> المخطط اليومي
                 </MenuItem>
