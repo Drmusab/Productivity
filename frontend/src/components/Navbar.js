@@ -21,7 +21,8 @@ import {
   ExitToApp,
   Repeat,
   CheckBox,
-  Today
+  Today,
+  FitnessCenter
 } from '@mui/icons-material';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
@@ -108,6 +109,14 @@ const Navbar = () => {
             </Button>
             <Button
               color="inherit"
+              startIcon={<FitnessCenter />}
+              onClick={() => navigate('/fitness')}
+              variant={location.pathname === '/fitness' ? 'outlined' : 'text'}
+            >
+              اللياقة
+            </Button>
+            <Button
+              color="inherit"
               startIcon={<Analytics />}
               onClick={() => navigate('/analytics')}
               variant={location.pathname === '/analytics' ? 'outlined' : 'text'}
@@ -171,6 +180,9 @@ const Navbar = () => {
                 </MenuItem>
                 <MenuItem onClick={() => handleNavigation('/habits')}>
                   <CheckBox sx={{ mr: 1 }} /> العادات
+                </MenuItem>
+                <MenuItem onClick={() => handleNavigation('/fitness')}>
+                  <FitnessCenter sx={{ mr: 1 }} /> اللياقة
                 </MenuItem>
                 <MenuItem onClick={() => handleNavigation('/analytics')}>
                   <Analytics sx={{ mr: 1 }} /> التحليلات

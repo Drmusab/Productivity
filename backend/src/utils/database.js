@@ -389,6 +389,186 @@ const initDatabase = () => {
           FOREIGN KEY (created_by) REFERENCES users (id)
         )`);
 
+        // Fitness/Gym Companion tables
+        // Muscle groups taxonomy
+        await runAsync(`CREATE TABLE IF NOT EXISTS muscle_groups (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          name TEXT NOT NULL UNIQUE,
+          parent_id INTEGER,
+          description TEXT,
+          created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+          FOREIGN KEY (parent_id) REFERENCES muscle_groups (id) ON DELETE SET NULL
+        )`);
+
+        // Exercise database
+        await runAsync(`CREATE TABLE IF NOT EXISTS exercises (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          name TEXT NOT NULL,
+          description TEXT,
+          demonstration_url TEXT,
+          primary_muscle_group_id INTEGER,
+          equipment TEXT,
+          difficulty TEXT DEFAULT 'intermediate',
+          custom_notes TEXT,
+          is_custom BOOLEAN DEFAULT 0,
+          created_by INTEGER,
+          created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+          updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+          FOREIGN KEY (primary_muscle_group_id) REFERENCES muscle_groups (id) ON DELETE SET NULL,
+          FOREIGN KEY (created_by) REFERENCES users (id)
+        )`);
+
+        // Exercise secondary muscle groups (many-to-many)
+        await runAsync(`CREATE TABLE IF NOT EXISTS exercise_muscle_groups (
+          exercise_id INTEGER NOT NULL,
+          muscle_group_id INTEGER NOT NULL,
+          PRIMARY KEY (exercise_id, muscle_group_id),
+          FOREIGN KEY (exercise_id) REFERENCES exercises (id) ON DELETE CASCADE,
+          FOREIGN KEY (muscle_group_id) REFERENCES muscle_groups (id) ON DELETE CASCADE
+        )`);
+
+        // Workout templates (programs/splits)
+        await runAsync(`CREATE TABLE IF NOT EXISTS workout_templates (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          name TEXT NOT NULL,
+          description TEXT,
+          frequency INTEGER DEFAULT 3,
+          duration_weeks INTEGER,
+          goal TEXT DEFAULT 'general',
+          is_active BOOLEAN DEFAULT 1,
+          created_by INTEGER,
+          created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+          updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+          FOREIGN KEY (created_by) REFERENCES users (id)
+        )`);
+
+        // Workout days within a template
+        await runAsync(`CREATE TABLE IF NOT EXISTS workout_days (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          template_id INTEGER NOT NULL,
+          name TEXT NOT NULL,
+          day_order INTEGER NOT NULL,
+          notes TEXT,
+          created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+          FOREIGN KEY (template_id) REFERENCES workout_templates (id) ON DELETE CASCADE
+        )`);
+
+        // Exercises planned for each workout day
+        await runAsync(`CREATE TABLE IF NOT EXISTS workout_day_exercises (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          workout_day_id INTEGER NOT NULL,
+          exercise_id INTEGER NOT NULL,
+          sets INTEGER DEFAULT 3,
+          target_reps TEXT DEFAULT '8-12',
+          rest_seconds INTEGER DEFAULT 90,
+          notes TEXT,
+          exercise_order INTEGER NOT NULL,
+          FOREIGN KEY (workout_day_id) REFERENCES workout_days (id) ON DELETE CASCADE,
+          FOREIGN KEY (exercise_id) REFERENCES exercises (id) ON DELETE CASCADE
+        )`);
+
+        // Workout sessions (actual workout logs)
+        await runAsync(`CREATE TABLE IF NOT EXISTS workout_sessions (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          template_id INTEGER,
+          workout_day_id INTEGER,
+          date DATE NOT NULL,
+          start_time DATETIME,
+          end_time DATETIME,
+          duration_minutes INTEGER,
+          notes TEXT,
+          energy_level INTEGER DEFAULT 3,
+          overall_feeling INTEGER DEFAULT 3,
+          created_by INTEGER,
+          created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+          updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+          FOREIGN KEY (template_id) REFERENCES workout_templates (id) ON DELETE SET NULL,
+          FOREIGN KEY (workout_day_id) REFERENCES workout_days (id) ON DELETE SET NULL,
+          FOREIGN KEY (created_by) REFERENCES users (id)
+        )`);
+
+        // Exercise logs (set data within a session)
+        await runAsync(`CREATE TABLE IF NOT EXISTS exercise_logs (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          session_id INTEGER NOT NULL,
+          exercise_id INTEGER NOT NULL,
+          set_number INTEGER NOT NULL,
+          reps INTEGER,
+          weight REAL,
+          rpe INTEGER,
+          rest_seconds INTEGER,
+          notes TEXT,
+          is_pr BOOLEAN DEFAULT 0,
+          created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+          FOREIGN KEY (session_id) REFERENCES workout_sessions (id) ON DELETE CASCADE,
+          FOREIGN KEY (exercise_id) REFERENCES exercises (id) ON DELETE CASCADE
+        )`);
+
+        // Personal records tracking
+        await runAsync(`CREATE TABLE IF NOT EXISTS personal_records (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          exercise_id INTEGER NOT NULL,
+          record_type TEXT DEFAULT 'weight',
+          value REAL NOT NULL,
+          reps INTEGER,
+          date DATE NOT NULL,
+          session_id INTEGER,
+          created_by INTEGER,
+          created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+          FOREIGN KEY (exercise_id) REFERENCES exercises (id) ON DELETE CASCADE,
+          FOREIGN KEY (session_id) REFERENCES workout_sessions (id) ON DELETE SET NULL,
+          FOREIGN KEY (created_by) REFERENCES users (id)
+        )`);
+
+        // Body measurements
+        await runAsync(`CREATE TABLE IF NOT EXISTS body_measurements (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          date DATE NOT NULL,
+          weight REAL,
+          body_fat_percent REAL,
+          chest REAL,
+          waist REAL,
+          hips REAL,
+          left_arm REAL,
+          right_arm REAL,
+          left_thigh REAL,
+          right_thigh REAL,
+          notes TEXT,
+          created_by INTEGER,
+          created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+          FOREIGN KEY (created_by) REFERENCES users (id)
+        )`);
+
+        // Fitness user profile (initial entry for BMI/BMR calculations)
+        await runAsync(`CREATE TABLE IF NOT EXISTS fitness_profile (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          user_id INTEGER UNIQUE,
+          height REAL,
+          age INTEGER,
+          gender TEXT,
+          activity_level TEXT DEFAULT 'moderate',
+          created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+          updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+          FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE
+        )`);
+
+        // Fitness goals
+        await runAsync(`CREATE TABLE IF NOT EXISTS fitness_goals (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          goal_type TEXT NOT NULL,
+          target_value REAL,
+          target_description TEXT,
+          deadline DATE,
+          current_progress REAL DEFAULT 0,
+          status TEXT DEFAULT 'active',
+          exercise_id INTEGER,
+          created_by INTEGER,
+          created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+          updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+          FOREIGN KEY (exercise_id) REFERENCES exercises (id) ON DELETE SET NULL,
+          FOREIGN KEY (created_by) REFERENCES users (id)
+        )`);
+
         // Create indexes for better performance
         await runAsync('CREATE INDEX IF NOT EXISTS idx_tasks_column_id ON tasks(column_id)');
         await runAsync('CREATE INDEX IF NOT EXISTS idx_tasks_swimlane_id ON tasks(swimlane_id)');
@@ -401,6 +581,14 @@ const initDatabase = () => {
         await runAsync('CREATE INDEX IF NOT EXISTS idx_daily_notes_date ON daily_notes(date)');
         await runAsync('CREATE INDEX IF NOT EXISTS idx_daily_reflections_date ON daily_reflections(date)');
         await runAsync('CREATE INDEX IF NOT EXISTS idx_time_blocks_date ON time_blocks(date)');
+        // Fitness indexes
+        await runAsync('CREATE INDEX IF NOT EXISTS idx_exercises_muscle_group ON exercises(primary_muscle_group_id)');
+        await runAsync('CREATE INDEX IF NOT EXISTS idx_workout_sessions_date ON workout_sessions(date)');
+        await runAsync('CREATE INDEX IF NOT EXISTS idx_exercise_logs_session ON exercise_logs(session_id)');
+        await runAsync('CREATE INDEX IF NOT EXISTS idx_exercise_logs_exercise ON exercise_logs(exercise_id)');
+        await runAsync('CREATE INDEX IF NOT EXISTS idx_personal_records_exercise ON personal_records(exercise_id)');
+        await runAsync('CREATE INDEX IF NOT EXISTS idx_body_measurements_date ON body_measurements(date)');
+        await runAsync('CREATE INDEX IF NOT EXISTS idx_fitness_goals_status ON fitness_goals(status)');
 
         // Ensure a default demo user exists for first-run experience
         const userCount = await getAsync('SELECT COUNT(*) as count FROM users');
@@ -465,6 +653,96 @@ const initDatabase = () => {
           }
         }
 
+        // Insert default muscle groups and exercises if none exist
+        const muscleGroupCount = await getAsync('SELECT COUNT(*) as count FROM muscle_groups');
+        if (!muscleGroupCount || muscleGroupCount.count === 0) {
+          // Main muscle groups
+          const mainGroups = [
+            { name: 'Chest', description: 'Pectoral muscles' },
+            { name: 'Back', description: 'Upper and lower back muscles' },
+            { name: 'Legs', description: 'Quadriceps, hamstrings, glutes, calves' },
+            { name: 'Shoulders', description: 'Deltoid muscles' },
+            { name: 'Arms', description: 'Biceps, triceps, forearms' },
+            { name: 'Core', description: 'Abdominals and obliques' },
+            { name: 'Cardio', description: 'Cardiovascular exercises' }
+          ];
+
+          const groupIds = {};
+          for (const group of mainGroups) {
+            const result = await runAsync(
+              'INSERT INTO muscle_groups (name, description) VALUES (?, ?)',
+              [group.name, group.description]
+            );
+            groupIds[group.name] = result.lastID;
+          }
+
+          // Sub-groups
+          const subGroups = [
+            { name: 'Quadriceps', parent: 'Legs' },
+            { name: 'Hamstrings', parent: 'Legs' },
+            { name: 'Glutes', parent: 'Legs' },
+            { name: 'Calves', parent: 'Legs' },
+            { name: 'Biceps', parent: 'Arms' },
+            { name: 'Triceps', parent: 'Arms' },
+            { name: 'Forearms', parent: 'Arms' },
+            { name: 'Front Deltoids', parent: 'Shoulders' },
+            { name: 'Side Deltoids', parent: 'Shoulders' },
+            { name: 'Rear Deltoids', parent: 'Shoulders' },
+            { name: 'Upper Back', parent: 'Back' },
+            { name: 'Lats', parent: 'Back' },
+            { name: 'Lower Back', parent: 'Back' },
+            { name: 'Upper Chest', parent: 'Chest' },
+            { name: 'Lower Chest', parent: 'Chest' },
+            { name: 'Abs', parent: 'Core' },
+            { name: 'Obliques', parent: 'Core' }
+          ];
+
+          for (const sub of subGroups) {
+            await runAsync(
+              'INSERT INTO muscle_groups (name, parent_id, description) VALUES (?, ?, ?)',
+              [sub.name, groupIds[sub.parent], `Part of ${sub.parent}`]
+            );
+          }
+
+          // Default exercises
+          const defaultExercises = [
+            { name: 'Bench Press', muscle: 'Chest', equipment: 'Barbell', difficulty: 'intermediate' },
+            { name: 'Incline Bench Press', muscle: 'Chest', equipment: 'Barbell', difficulty: 'intermediate' },
+            { name: 'Dumbbell Flyes', muscle: 'Chest', equipment: 'Dumbbells', difficulty: 'beginner' },
+            { name: 'Push-ups', muscle: 'Chest', equipment: 'Bodyweight', difficulty: 'beginner' },
+            { name: 'Deadlift', muscle: 'Back', equipment: 'Barbell', difficulty: 'advanced' },
+            { name: 'Bent Over Rows', muscle: 'Back', equipment: 'Barbell', difficulty: 'intermediate' },
+            { name: 'Pull-ups', muscle: 'Back', equipment: 'Bodyweight', difficulty: 'intermediate' },
+            { name: 'Lat Pulldown', muscle: 'Back', equipment: 'Cable Machine', difficulty: 'beginner' },
+            { name: 'Squat', muscle: 'Legs', equipment: 'Barbell', difficulty: 'intermediate' },
+            { name: 'Leg Press', muscle: 'Legs', equipment: 'Machine', difficulty: 'beginner' },
+            { name: 'Lunges', muscle: 'Legs', equipment: 'Dumbbells', difficulty: 'beginner' },
+            { name: 'Leg Curl', muscle: 'Legs', equipment: 'Machine', difficulty: 'beginner' },
+            { name: 'Calf Raises', muscle: 'Legs', equipment: 'Machine', difficulty: 'beginner' },
+            { name: 'Overhead Press', muscle: 'Shoulders', equipment: 'Barbell', difficulty: 'intermediate' },
+            { name: 'Lateral Raises', muscle: 'Shoulders', equipment: 'Dumbbells', difficulty: 'beginner' },
+            { name: 'Face Pulls', muscle: 'Shoulders', equipment: 'Cable Machine', difficulty: 'beginner' },
+            { name: 'Bicep Curls', muscle: 'Arms', equipment: 'Dumbbells', difficulty: 'beginner' },
+            { name: 'Tricep Pushdowns', muscle: 'Arms', equipment: 'Cable Machine', difficulty: 'beginner' },
+            { name: 'Hammer Curls', muscle: 'Arms', equipment: 'Dumbbells', difficulty: 'beginner' },
+            { name: 'Skull Crushers', muscle: 'Arms', equipment: 'Barbell', difficulty: 'intermediate' },
+            { name: 'Plank', muscle: 'Core', equipment: 'Bodyweight', difficulty: 'beginner' },
+            { name: 'Crunches', muscle: 'Core', equipment: 'Bodyweight', difficulty: 'beginner' },
+            { name: 'Russian Twists', muscle: 'Core', equipment: 'Bodyweight', difficulty: 'beginner' },
+            { name: 'Leg Raises', muscle: 'Core', equipment: 'Bodyweight', difficulty: 'intermediate' },
+            { name: 'Running', muscle: 'Cardio', equipment: 'Treadmill', difficulty: 'beginner' },
+            { name: 'Cycling', muscle: 'Cardio', equipment: 'Stationary Bike', difficulty: 'beginner' },
+            { name: 'Rowing', muscle: 'Cardio', equipment: 'Rowing Machine', difficulty: 'intermediate' }
+          ];
+
+          for (const ex of defaultExercises) {
+            await runAsync(
+              'INSERT INTO exercises (name, primary_muscle_group_id, equipment, difficulty, is_custom) VALUES (?, ?, ?, ?, 0)',
+              [ex.name, groupIds[ex.muscle], ex.equipment, ex.difficulty]
+            );
+          }
+        }
+
         resolve();
       } catch (error) {
         reject(error);
@@ -497,6 +775,19 @@ const TABLES_IN_DELETE_ORDER = [
   'tags',
   'habit_logs',
   'habits',
+  // Fitness tables
+  'exercise_logs',
+  'personal_records',
+  'workout_sessions',
+  'workout_day_exercises',
+  'workout_days',
+  'workout_templates',
+  'exercise_muscle_groups',
+  'exercises',
+  'muscle_groups',
+  'body_measurements',
+  'fitness_goals',
+  'fitness_profile',
   'users'
 ];
 

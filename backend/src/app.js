@@ -25,6 +25,7 @@ const routineRoutes = require('./routes/routines');
 const settingsRoutes = require('./routes/settings');
 const habitRoutes = require('./routes/habits');
 const plannerRoutes = require('./routes/planner');
+const fitnessRoutes = require('./routes/fitness');
 const { startScheduler } = require('./services/scheduler');
 const { requestTimer } = require('./middleware/performance');
 const logger = require('./utils/logger');
@@ -77,6 +78,7 @@ app.use('/api/routines', routineRoutes);
 app.use('/api/settings', settingsRoutes);
 app.use('/api/habits', habitRoutes);
 app.use('/api/planner', plannerRoutes);
+app.use('/api/fitness', fitnessRoutes);
 
 const { errorHandler } = require('./middleware/errorHandler');
 
