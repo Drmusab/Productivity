@@ -24,6 +24,7 @@ const reportRoutes = require('./routes/reports');
 const routineRoutes = require('./routes/routines');
 const settingsRoutes = require('./routes/settings');
 const habitRoutes = require('./routes/habits');
+const plannerRoutes = require('./routes/planner');
 const { startScheduler } = require('./services/scheduler');
 const { requestTimer } = require('./middleware/performance');
 const logger = require('./utils/logger');
@@ -75,6 +76,7 @@ app.use('/api/reports', reportRoutes);
 app.use('/api/routines', routineRoutes);
 app.use('/api/settings', settingsRoutes);
 app.use('/api/habits', habitRoutes);
+app.use('/api/planner', plannerRoutes);
 
 const { errorHandler } = require('./middleware/errorHandler');
 
