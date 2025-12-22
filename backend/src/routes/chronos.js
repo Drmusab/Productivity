@@ -8,6 +8,7 @@ const express = require('express');
 const router = express.Router();
 const { allAsync, runAsync, getAsync } = require('../utils/database');
 const { authenticateToken } = require('../middleware/apiKeyAuth');
+const { autoScheduleTask, addMinutes, getMinutesDifference } = require('../services/chronos');
 
 // ==================== TIME BLOCKS ENDPOINTS ====================
 
@@ -994,11 +995,7 @@ router.post('/integrate/task-to-block', authenticateToken, async (req, res) => {
 
     // Calculate end time
     const blockDuration = duration || task.time_estimate || 60;
-    const [hours, minutes] = start_time.split(':').map(Number);
-    const endMinutes = hours * 60 + minutes + blockDuration;
-    const endHours = Math.floor(endMinutes / 60);
-    const endMins = endMinutes % 60;
-    const end_time = `${String(endHours).padStart(2, '0')}:${String(endMins).padStart(2, '0')}`;
+    const end_time = addMinutes(start_time, blockDuration);
 
     // Create time block
     const result = await runAsync(`
@@ -1040,7 +1037,6 @@ router.post('/integrate/auto-schedule-tasks', authenticateToken, async (req, res
       return res.status(400).json({ error: 'task_ids must be an array' });
     }
 
-    const { autoScheduleTask } = require('../services/chronos');
     const scheduledBlocks = [];
 
     for (const taskId of task_ids) {
@@ -1100,9 +1096,7 @@ router.get('/integrate/daily-blocks/:date', authenticateToken, async (req, res) 
       blocks,
       priorities,
       totalPlannedMinutes: blocks.reduce((sum, block) => {
-        const [startH, startM] = block.start_time.split(':').map(Number);
-        const [endH, endM] = block.end_time.split(':').map(Number);
-        return sum + ((endH * 60 + endM) - (startH * 60 + startM));
+        return sum + getMinutesDifference(block.start_time, block.end_time);
       }, 0)
     });
   } catch (error) {

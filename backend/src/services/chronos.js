@@ -316,11 +316,23 @@ function addMinutes(timeStr, minutes) {
   return `${String(newHour).padStart(2, '0')}:${String(newMin).padStart(2, '0')}`;
 }
 
+/**
+ * Utility: Add days to a date string
+ */
+function addDays(dateStr, days) {
+  const date = new Date(dateStr);
+  date.setDate(date.getDate() + days);
+  return date.toISOString().split('T')[0];
+}
+
 module.exports = {
   checkConflicts,
   suggestOptimalTime,
   calculateBufferTime,
   findAvailableSlots,
   autoScheduleTask,
-  generateDailyInsights
+  generateDailyInsights,
+  getMinutesDifference,
+  addMinutes,
+  addDays
 };

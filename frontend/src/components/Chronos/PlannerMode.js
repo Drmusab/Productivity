@@ -118,7 +118,7 @@ function PlannerMode({ settings, onBlockCreated }) {
           const dayBlocks = getBlocksForDate(day);
 
           return (
-            <Grid item xs={12} sm={6} md={12/7} key={index}>
+            <Grid item xs={12} sm={6} md={1.7} key={index}>
               <Paper
                 sx={{
                   p: 2,
