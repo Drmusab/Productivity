@@ -971,4 +971,144 @@ router.post('/pomodoro/:id/complete', authenticateToken, async (req, res) => {
   }
 });
 
+// ==================== INTEGRATION ENDPOINTS ====================
+
+/**
+ * Create time block from task
+ * @route POST /api/chronos/integrate/task-to-block
+ */
+router.post('/integrate/task-to-block', authenticateToken, async (req, res) => {
+  try {
+    const { task_id, date, start_time, duration } = req.body;
+    const userId = req.user.id;
+
+    if (!task_id || !date || !start_time) {
+      return res.status(400).json({ error: 'Missing required fields' });
+    }
+
+    // Get task details
+    const task = await getAsync('SELECT * FROM tasks WHERE id = ? AND created_by = ?', [task_id, userId]);
+    if (!task) {
+      return res.status(404).json({ error: 'Task not found' });
+    }
+
+    // Calculate end time
+    const blockDuration = duration || task.time_estimate || 60;
+    const [hours, minutes] = start_time.split(':').map(Number);
+    const endMinutes = hours * 60 + minutes + blockDuration;
+    const endHours = Math.floor(endMinutes / 60);
+    const endMins = endMinutes % 60;
+    const end_time = `${String(endHours).padStart(2, '0')}:${String(endMins).padStart(2, '0')}`;
+
+    // Create time block
+    const result = await runAsync(`
+      INSERT INTO chronos_time_blocks (
+        title, description, date, start_time, end_time, category,
+        task_id, project_id, energy_required, created_by
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `, [
+      task.title,
+      task.description,
+      date,
+      start_time,
+      end_time,
+      task.category || 'general',
+      task_id,
+      task.project_id,
+      task.energy_required || 'medium',
+      userId
+    ]);
+
+    const newBlock = await getAsync('SELECT * FROM chronos_time_blocks WHERE id = ?', [result.lastID]);
+    res.status(201).json(newBlock);
+  } catch (error) {
+    console.error('Error creating block from task:', error);
+    res.status(500).json({ error: 'Failed to create time block from task' });
+  }
+});
+
+/**
+ * Get suggested schedule for tasks
+ * @route POST /api/chronos/integrate/auto-schedule-tasks
+ */
+router.post('/integrate/auto-schedule-tasks', authenticateToken, async (req, res) => {
+  try {
+    const { task_ids, start_date } = req.body;
+    const userId = req.user.id;
+
+    if (!task_ids || !Array.isArray(task_ids)) {
+      return res.status(400).json({ error: 'task_ids must be an array' });
+    }
+
+    const { autoScheduleTask } = require('../services/chronos');
+    const scheduledBlocks = [];
+
+    for (const taskId of task_ids) {
+      const task = await getAsync('SELECT * FROM tasks WHERE id = ? AND created_by = ?', [taskId, userId]);
+      if (task) {
+        try {
+          const suggestion = await autoScheduleTask(userId, {
+            duration: task.time_estimate || 60,
+            category: task.category || 'general',
+            energy_required: task.energy_required || 'medium',
+            title: task.title
+          }, start_date);
+
+          scheduledBlocks.push({
+            task_id: taskId,
+            suggestion
+          });
+        } catch (error) {
+          console.error(`Could not schedule task ${taskId}:`, error.message);
+        }
+      }
+    }
+
+    res.json({ scheduledBlocks });
+  } catch (error) {
+    console.error('Error auto-scheduling tasks:', error);
+    res.status(500).json({ error: 'Failed to auto-schedule tasks' });
+  }
+});
+
+/**
+ * Sync time blocks with daily planner
+ * @route GET /api/chronos/integrate/daily-blocks/:date
+ */
+router.get('/integrate/daily-blocks/:date', authenticateToken, async (req, res) => {
+  try {
+    const { date } = req.params;
+    const userId = req.user.id;
+
+    // Get time blocks for the date
+    const blocks = await allAsync(`
+      SELECT tb.*, t.title as task_title
+      FROM chronos_time_blocks tb
+      LEFT JOIN tasks t ON tb.task_id = t.id
+      WHERE tb.created_by = ? AND tb.date = ?
+      ORDER BY tb.start_time
+    `, [userId, date]);
+
+    // Get daily priorities for the date
+    const priorities = await allAsync(
+      'SELECT * FROM daily_priorities WHERE created_by = ? AND date = ? ORDER BY position',
+      [userId, date]
+    );
+
+    res.json({
+      date,
+      blocks,
+      priorities,
+      totalPlannedMinutes: blocks.reduce((sum, block) => {
+        const [startH, startM] = block.start_time.split(':').map(Number);
+        const [endH, endM] = block.end_time.split(':').map(Number);
+        return sum + ((endH * 60 + endM) - (startH * 60 + startM));
+      }, 0)
+    });
+  } catch (error) {
+    console.error('Error syncing daily blocks:', error);
+    res.status(500).json({ error: 'Failed to sync daily blocks' });
+  }
+});
+
 module.exports = router;
