@@ -13,6 +13,7 @@ const { recordTaskHistory } = require('../utils/history');
 const { triggerAutomation } = require('../services/automation');
 const apiKeyAuth = require('../middleware/apiKeyAuth');
 const { emitEvent } = require('../services/eventBus');
+const { searchTasks, countTasks } = require('../utils/taskFilters');
 
 /**
  * Validation rules for creating a new task.
@@ -192,6 +193,54 @@ router.get('/', listTasksValidations, (req, res) => {
       res.json(tasks);
     });
   });
+});
+
+/**
+ * Advanced task search endpoint with filtering, sorting, and pagination
+ * @route GET /api/tasks/search/advanced
+ */
+router.get('/search/advanced', async (req, res) => {
+  try {
+    const filters = {
+      search: req.query.search,
+      board_id: req.query.board_id ? parseInt(req.query.board_id) : undefined,
+      column_id: req.query.column_id ? parseInt(req.query.column_id) : undefined,
+      assigned_to: req.query.assigned_to ? parseInt(req.query.assigned_to) : undefined,
+      overdue: req.query.overdue,
+      due_today: req.query.due_today,
+      due_this_week: req.query.due_this_week,
+      limit: req.query.limit ? parseInt(req.query.limit) : 50,
+      offset: req.query.offset ? parseInt(req.query.offset) : 0
+    };
+
+    if (req.query.priority) {
+      filters.priority = req.query.priority.includes(',') 
+        ? req.query.priority.split(',') 
+        : req.query.priority;
+    }
+
+    if (req.query.tags) {
+      filters.tags = req.query.tags.split(',').map(id => parseInt(id));
+    }
+
+    filters.sort = {
+      by: req.query.sort_by || 'position',
+      direction: req.query.sort_direction || 'ASC'
+    };
+
+    const tasks = await searchTasks(filters);
+    const total = await countTasks(filters);
+
+    res.json({
+      tasks,
+      total,
+      limit: filters.limit,
+      offset: filters.offset,
+      has_more: (filters.offset + filters.limit) < total
+    });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
 });
 
 // Get a specific task
@@ -536,6 +585,89 @@ router.delete('/:id/tags', (req, res) => {
       res.json({ message: 'Tags removed from task successfully' });
     }
   );
+});
+
+// Bulk Operations
+const bulkOps = require('../utils/bulkOperations');
+
+/**
+ * Bulk update tasks
+ */
+router.post('/bulk/update', async (req, res) => {
+  const { taskIds, updates, userId } = req.body;
+  
+  if (!taskIds || !Array.isArray(taskIds) || taskIds.length === 0) {
+    return res.status(400).json({ error: 'taskIds array is required' });
+  }
+  
+  if (!updates || typeof updates !== 'object') {
+    return res.status(400).json({ error: 'updates object is required' });
+  }
+
+  try {
+    const result = await bulkOps.bulkUpdateTasks(taskIds, updates, userId);
+    res.json(result);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+/**
+ * Bulk delete tasks
+ */
+router.post('/bulk/delete', async (req, res) => {
+  const { taskIds, userId } = req.body;
+  
+  if (!taskIds || !Array.isArray(taskIds) || taskIds.length === 0) {
+    return res.status(400).json({ error: 'taskIds array is required' });
+  }
+
+  try {
+    const result = await bulkOps.bulkDeleteTasks(taskIds, userId);
+    res.json(result);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+/**
+ * Bulk move tasks to column
+ */
+router.post('/bulk/move', async (req, res) => {
+  const { taskIds, columnId, userId } = req.body;
+  
+  if (!taskIds || !Array.isArray(taskIds) || taskIds.length === 0) {
+    return res.status(400).json({ error: 'taskIds array is required' });
+  }
+  
+  if (!columnId) {
+    return res.status(400).json({ error: 'columnId is required' });
+  }
+
+  try {
+    const result = await bulkOps.bulkMoveTasks(taskIds, columnId, userId);
+    res.json(result);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+/**
+ * Bulk duplicate tasks
+ */
+router.post('/bulk/duplicate', async (req, res) => {
+  const { taskIds, userId } = req.body;
+  
+  if (!taskIds || !Array.isArray(taskIds) || taskIds.length === 0) {
+    return res.status(400).json({ error: 'taskIds array is required' });
+  }
+
+  try {
+    const result = await bulkOps.bulkDuplicateTasks(taskIds, userId);
+    res.json(result);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
 });
 
 module.exports = router;

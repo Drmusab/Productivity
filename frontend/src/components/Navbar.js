@@ -9,7 +9,7 @@ import {
   MenuItem,
   Box,
   Avatar,
-  useTheme,
+  useTheme as useMuiTheme,
   useMediaQuery,
   Divider,
   Tooltip
@@ -26,17 +26,21 @@ import {
   FitnessCenter,
   Mosque,
   ViewKanban,
-  Timer
+  Timer,
+  Brightness4,
+  Brightness7
 } from '@mui/icons-material';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
+import { useTheme } from '../contexts/ThemeContext';
 
 const Navbar = () => {
-  const theme = useTheme();
-  const isMobile = useMediaQuery(theme.breakpoints.down('lg'));
+  const muiTheme = useMuiTheme();
+  const isMobile = useMediaQuery(muiTheme.breakpoints.down('lg'));
   const navigate = useNavigate();
   const location = useLocation();
   const { user, isAuthenticated, logout } = useAuth();
+  const { mode, toggleTheme } = useTheme();
   const [anchorEl, setAnchorEl] = useState(null);
 
   const handleMenu = (event) => {
@@ -184,6 +188,23 @@ const Navbar = () => {
             })}
           </Box>
         )}
+        
+        {/* Theme Toggle Button */}
+        <Tooltip title={mode === 'light' ? 'الوضع الداكن' : 'الوضع الفاتح'}>
+          <IconButton
+            onClick={toggleTheme}
+            color="inherit"
+            sx={{
+              ml: 1,
+              transition: 'all 0.2s ease',
+              '&:hover': {
+                transform: 'rotate(180deg)',
+              },
+            }}
+          >
+            {mode === 'light' ? <Brightness4 /> : <Brightness7 />}
+          </IconButton>
+        </Tooltip>
         
         <Box sx={{ ml: 1 }}>
           <Tooltip title="الملف الشخصي">

@@ -1017,6 +1017,19 @@ const initDatabase = () => {
         await runAsync('CREATE INDEX IF NOT EXISTS idx_chronos_time_sessions_task ON chronos_time_sessions(task_id)');
         await runAsync('CREATE INDEX IF NOT EXISTS idx_chronos_analytics_user_date ON chronos_analytics(user_id, date)');
         await runAsync('CREATE INDEX IF NOT EXISTS idx_chronos_analytics_metric ON chronos_analytics(metric_type)');
+        
+        // Additional composite indexes for performance optimization
+        await runAsync('CREATE INDEX IF NOT EXISTS idx_tasks_column_position ON tasks(column_id, position)');
+        await runAsync('CREATE INDEX IF NOT EXISTS idx_tasks_priority_due ON tasks(priority, due_date)');
+        await runAsync('CREATE INDEX IF NOT EXISTS idx_tasks_assigned_status ON tasks(assigned_to, execution_status)');
+        await runAsync('CREATE INDEX IF NOT EXISTS idx_boards_created_by ON boards(created_by)');
+        await runAsync('CREATE INDEX IF NOT EXISTS idx_columns_board_position ON columns(board_id, position)');
+        await runAsync('CREATE INDEX IF NOT EXISTS idx_swimlanes_board_position ON swimlanes(board_id, position)');
+        await runAsync('CREATE INDEX IF NOT EXISTS idx_task_tags_tag ON task_tags(tag_id)');
+        await runAsync('CREATE INDEX IF NOT EXISTS idx_subtasks_task_position ON subtasks(task_id, position)');
+        await runAsync('CREATE INDEX IF NOT EXISTS idx_attachments_task ON attachments(task_id)');
+        await runAsync('CREATE INDEX IF NOT EXISTS idx_integrations_type_enabled ON integrations(type, enabled)');
+        await runAsync('CREATE INDEX IF NOT EXISTS idx_automation_rules_enabled ON automation_rules(enabled)');
 
         // Ensure a default demo user exists for first-run experience
         const userCount = await getAsync('SELECT COUNT(*) as count FROM users');
