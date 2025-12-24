@@ -20,9 +20,7 @@ import {
   Divider
 } from '@mui/material';
 import {
-  PlayArrow as PlayIcon,
-  Stop as StopIcon,
-  Pause as PauseIcon
+  PlayArrow as PlayIcon
 } from '@mui/icons-material';
 import axios from 'axios';
 import { format } from 'date-fns';
@@ -32,7 +30,6 @@ const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:3001';
 function DailyView({ settings, activeSession, onSessionUpdate }) {
   const [todayBlocks, setTodayBlocks] = useState([]);
   const [todaySessions, setTodaySessions] = useState([]);
-  const [insights, setInsights] = useState(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {

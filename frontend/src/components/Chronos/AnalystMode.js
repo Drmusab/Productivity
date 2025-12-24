@@ -44,10 +44,18 @@ function AnalystMode({ settings }) {
   const [timeRange, setTimeRange] = useState(7);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    fetchAnalytics();
-    fetchProductivityScore();
-  }, [timeRange]);
+  const fetchProductivityScore = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await axios.get(
+        `${API_URL}/api/chronos/analytics/productivity-score?days=${timeRange}`,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      setProductivityScore(response.data);
+    } catch (error) {
+      console.error('Error fetching productivity score:', error);
+    }
+  };
 
   const fetchAnalytics = async () => {
     setLoading(true);
@@ -65,18 +73,11 @@ function AnalystMode({ settings }) {
     }
   };
 
-  const fetchProductivityScore = async () => {
-    try {
-      const token = localStorage.getItem('token');
-      const response = await axios.get(
-        `${API_URL}/api/chronos/analytics/productivity-score?days=${timeRange}`,
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
-      setProductivityScore(response.data);
-    } catch (error) {
-      console.error('Error fetching productivity score:', error);
-    }
-  };
+  useEffect(() => {
+    fetchAnalytics();
+    fetchProductivityScore();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [timeRange]);
 
   if (loading || !analytics) {
     return (

@@ -16,8 +16,7 @@ import {
   FormControl,
   InputLabel,
   Select,
-  Box,
-  Typography
+  Box
 } from '@mui/material';
 import axios from 'axios';
 
@@ -61,10 +60,10 @@ function TimeBlockDialog({ open, onClose, onSave, block, settings }) {
 
   useEffect(() => {
     if (block) {
-      setFormData({
-        ...formData,
+      setFormData(f => ({
+        ...f,
         ...block
-      });
+      }));
     }
   }, [block]);
 

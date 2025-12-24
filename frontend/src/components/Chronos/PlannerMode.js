@@ -29,14 +29,13 @@ function PlannerMode({ settings, onBlockCreated }) {
   const [timeBlocks, setTimeBlocks] = useState([]);
   const [selectedBlock, setSelectedBlock] = useState(null);
   const [showDialog, setShowDialog] = useState(false);
-  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     fetchWeekBlocks();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentWeekStart]);
 
   const fetchWeekBlocks = async () => {
-    setLoading(true);
     try {
       const token = localStorage.getItem('token');
       const weekEnd = endOfWeek(currentWeekStart, { weekStartsOn: 1 });
@@ -48,8 +47,6 @@ function PlannerMode({ settings, onBlockCreated }) {
       setTimeBlocks(response.data);
     } catch (error) {
       console.error('Error fetching time blocks:', error);
-    } finally {
-      setLoading(false);
     }
   };
 
