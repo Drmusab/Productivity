@@ -35,8 +35,6 @@ import {
   PieChart,
   Pie,
   Cell,
-  LineChart,
-  Line,
   Area,
   AreaChart
 } from 'recharts';
@@ -218,12 +216,6 @@ const Analytics = () => {
     : 0;
 
   const COLORS = ['#ef4444', '#f97316', '#eab308', '#22c55e'];
-  const GRADIENT_COLORS = {
-    primary: ['#667eea', '#764ba2'],
-    success: ['#22c55e', '#10b981'],
-    warning: ['#f59e0b', '#d97706'],
-    error: ['#ef4444', '#dc2626'],
-  };
 
   if (loading) {
     return (

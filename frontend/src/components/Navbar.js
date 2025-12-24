@@ -12,11 +12,9 @@ import {
   useTheme,
   useMediaQuery,
   Divider,
-  Tooltip,
-  Badge
+  Tooltip
 } from '@mui/material';
 import {
-  AccountCircle,
   Dashboard,
   Event,
   Settings,
@@ -28,8 +26,7 @@ import {
   FitnessCenter,
   Mosque,
   ViewKanban,
-  Timer,
-  MenuOpen
+  Timer
 } from '@mui/icons-material';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';

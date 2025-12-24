@@ -19,7 +19,6 @@ import {
   Divider,
   Skeleton,
   Fade,
-  Chip,
   Tooltip,
   LinearProgress
 } from '@mui/material';
@@ -30,8 +29,7 @@ import {
   ContentCopy,
   Dashboard,
   AccessTime,
-  Assignment,
-  TrendingUp
+  Assignment
 } from '@mui/icons-material';
 import { getBoards, createBoard, deleteBoard, duplicateBoard } from '../services/boardService';
 import { useAuth } from '../contexts/AuthContext';
