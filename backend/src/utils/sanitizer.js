@@ -105,6 +105,15 @@ function sanitizeFilename(filename) {
 
 /**
  * Sanitize markdown content to allow safe formatting while preventing XSS
+ * 
+ * IMPORTANT: This is a basic sanitization function. For production use with 
+ * untrusted user input, strongly recommend using a dedicated library like:
+ * - DOMPurify (https://github.com/cure53/DOMPurify)
+ * - js-xss (https://github.com/leizongmin/js-xss)
+ * 
+ * This function provides a basic layer of protection but may not catch all edge cases.
+ * It should be used in combination with other security measures like Content Security Policy.
+ * 
  * @param {string} markdown - Markdown content
  * @returns {string} Sanitized markdown
  */
@@ -113,11 +122,33 @@ function sanitizeMarkdown(markdown) {
     return '';
   }
 
-  // Remove script tags and dangerous HTML
-  let sanitized = markdown.replace(/<script[^>]*>.*?<\/script>/gi, '');
-  sanitized = sanitized.replace(/<iframe[^>]*>.*?<\/iframe>/gi, '');
-  sanitized = sanitized.replace(/javascript:/gi, '');
-  sanitized = sanitized.replace(/on\w+\s*=/gi, ''); // Remove event handlers
+  let sanitized = markdown;
+  
+  // Iteratively remove dangerous tags to handle nested cases
+  // Run multiple passes to catch deeply nested or obfuscated attempts
+  for (let i = 0; i < 3; i++) {
+    // Remove script tags with all variations
+    sanitized = sanitized.replace(/<\s*script[^>]*>[\s\S]*?<\s*\/\s*script\s*>/gi, '');
+    
+    // Remove iframe tags
+    sanitized = sanitized.replace(/<\s*iframe[^>]*>[\s\S]*?<\s*\/\s*iframe\s*>/gi, '');
+    
+    // Remove object and embed tags
+    sanitized = sanitized.replace(/<\s*(object|embed)[^>]*>[\s\S]*?<\s*\/\s*\1\s*>/gi, '');
+  }
+  
+  // Remove all event handlers (multiple passes)
+  for (let i = 0; i < 2; i++) {
+    sanitized = sanitized.replace(/\s*on\w+\s*=\s*["'][^"']*["']/gi, '');
+    sanitized = sanitized.replace(/\s*on\w+\s*=\s*[^\s>]*/gi, '');
+  }
+  
+  // Remove dangerous protocols (multiple passes)
+  for (let i = 0; i < 2; i++) {
+    sanitized = sanitized.replace(/javascript\s*:/gi, '');
+    sanitized = sanitized.replace(/data\s*:/gi, '');
+    sanitized = sanitized.replace(/vbscript\s*:/gi, '');
+  }
   
   return sanitized;
 }
