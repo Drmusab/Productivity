@@ -1,11 +1,18 @@
 /**
  * @fileoverview Webhook service for triggering external HTTP endpoints (primarily n8n).
- * Handles webhook execution with retry logic, authentication, and error handling.
+ * Handles webhook execution with timeout handling, authentication, and error handling.
  * @module services/webhook
  */
 
 const axios = require('axios');
 const { getAsync } = require('../utils/database');
+const logger = require('../utils/logger');
+
+/**
+ * Default timeout for webhook requests in milliseconds.
+ * @constant {number}
+ */
+const WEBHOOK_TIMEOUT_MS = 10000;
 
 /**
  * Triggers a webhook by sending a POST request to the configured endpoint.
@@ -46,6 +53,7 @@ const triggerWebhook = async (webhookId, payload) => {
     try {
       config = JSON.parse(integration.config);
     } catch (error) {
+      logger.error('Invalid webhook configuration', { webhookId, error: error.message });
       return { success: false, error: 'Invalid webhook configuration' };
     }
 
@@ -53,6 +61,12 @@ const triggerWebhook = async (webhookId, payload) => {
 
     if (!webhookUrl) {
       return { success: false, error: 'Webhook URL not configured' };
+    }
+
+    // Validate URL format for security
+    if (!isValidUrl(webhookUrl)) {
+      logger.warn('Invalid webhook URL format', { webhookId });
+      return { success: false, error: 'Invalid webhook URL format' };
     }
 
     // Prepare HTTP headers
@@ -68,7 +82,7 @@ const triggerWebhook = async (webhookId, payload) => {
     // Execute webhook POST request
     const response = await axios.post(webhookUrl, payload, {
       headers,
-      timeout: 10000, // 10 second timeout
+      timeout: WEBHOOK_TIMEOUT_MS,
     });
 
     return {
@@ -77,11 +91,32 @@ const triggerWebhook = async (webhookId, payload) => {
       response: response.data,
     };
   } catch (error) {
-    console.error('Failed to trigger webhook:', error);
+    logger.error('Failed to trigger webhook', { 
+      webhookId, 
+      error: error.message,
+      code: error.code 
+    });
     return {
       success: false,
       error: error.message,
     };
+  }
+};
+
+/**
+ * Validates that a string is a valid HTTP/HTTPS URL.
+ * 
+ * @function isValidUrl
+ * @param {string} urlString - URL string to validate
+ * @returns {boolean} True if valid HTTP/HTTPS URL, false otherwise
+ * @private
+ */
+const isValidUrl = (urlString) => {
+  try {
+    const url = new URL(urlString);
+    return url.protocol === 'http:' || url.protocol === 'https:';
+  } catch (error) {
+    return false;
   }
 };
 
