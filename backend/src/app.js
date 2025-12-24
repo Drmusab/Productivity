@@ -11,8 +11,11 @@ const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
 const compression = require('compression');
 const mongoSanitize = require('express-mongo-sanitize');
+const swaggerUi = require('swagger-ui-express');
 const path = require('path');
 require('dotenv').config();
+
+const swaggerSpec = require('./config/swagger');
 
 const { initDatabase } = require('./utils/database');
 const taskRoutes = require('./routes/tasks');
@@ -99,6 +102,18 @@ app.use(mongoSanitize({
 
 // Static files middleware - serves uploaded attachments
 app.use('/attachments', express.static(path.join(__dirname, '../attachments')));
+
+// API Documentation with Swagger
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec, {
+  customCss: '.swagger-ui .topbar { display: none }',
+  customSiteTitle: 'Kanban API Documentation'
+}));
+
+// Swagger JSON endpoint
+app.get('/api-docs.json', (req, res) => {
+  res.setHeader('Content-Type', 'application/json');
+  res.send(swaggerSpec);
+});
 
 // API route registration
 app.use('/api/tasks', taskRoutes);
