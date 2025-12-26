@@ -5,14 +5,14 @@
  * grouping, and aggregations.
  */
 
-import { DatabaseQueryEngine } from '../services/databaseQueryEngine';
-import { DatabaseRowBlockData } from '../types/blocks';
+import { DatabaseQueryEngine } from '../src/services/databaseQueryEngine';
+import { DatabaseRowBlockData } from '../src/types/blocks';
 import {
   Property,
   PropertyType,
   FilterOperator,
   AggregationType,
-} from '../types/database';
+} from '../src/types/database';
 
 describe('DatabaseQueryEngine', () => {
   // Sample properties

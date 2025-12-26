@@ -7,12 +7,16 @@
 
 import { BlockCRUDEngine } from '../services/blockCRUD';
 import { DatabaseService } from '../services/databaseService';
-import { PropertyType, ViewType } from '../types/database';
+import { PropertyType, ViewType, FilterOperator, AggregationType } from '../types/database';
+import { initializeBlockSystem } from '../services/blockSystem';
 
 /**
  * Example: Create a task management database with multiple views
  */
 export function createTaskManagementExample() {
+  // Initialize block system first
+  initializeBlockSystem();
+  
   // Initialize services
   const blockEngine = new BlockCRUDEngine();
   const databaseService = new DatabaseService(blockEngine);
@@ -205,7 +209,7 @@ export function createTaskManagementExample() {
       conditions: [
         {
           propertyId: 'status',
-          operator: 'select_equals',
+          operator: FilterOperator.SELECT_EQUALS,
           value: 'inprogress',
         },
       ],
@@ -222,7 +226,7 @@ export function createTaskManagementExample() {
       conditions: [
         {
           propertyId: 'priority',
-          operator: 'select_equals',
+          operator: FilterOperator.SELECT_EQUALS,
           value: 'high',
         },
       ],
@@ -250,7 +254,7 @@ export function createTaskManagementExample() {
   const taskStats = databaseService.queryRows(databaseId, {
     groupBy: 'status',
     aggregations: [
-      { propertyId: 'status', type: 'count' },
+      { propertyId: 'status', type: AggregationType.COUNT },
     ],
   });
   console.log(`   Result: Aggregations computed`);
