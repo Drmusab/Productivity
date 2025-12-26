@@ -100,6 +100,19 @@ const listTasksValidations = [
   query('assignedTo').optional().isInt({ min: 1 }).withMessage('Assigned To must be a positive integer'),
   query('dueBefore').optional().isISO8601().withMessage('dueBefore must be a valid ISO 8601 date'),
   query('dueAfter').optional().isISO8601().withMessage('dueAfter must be a valid ISO 8601 date'),
+  query('tags').optional().custom((value) => {
+    const tagIds = value.split(',').map(id => Number(id));
+
+    if (tagIds.length === 0) {
+      throw new Error('Tags must be a comma-separated list of integers');
+    }
+
+    if (tagIds.some(id => !Number.isInteger(id) || id < 1)) {
+      throw new Error('Tag IDs must be positive integers');
+    }
+
+    return true;
+  })
 ];
 
 /**
@@ -163,6 +176,15 @@ router.get('/', listTasksValidations, (req, res) => {
   if (dueAfter) {
     query += ' AND t.due_date >= ?';
     params.push(dueAfter);
+  }
+
+  if (tags) {
+    const tagIds = tags.split(',').map(id => Number(id));
+    const placeholders = tagIds.map(() => '?').join(',');
+    query += ` AND t.id IN (
+      SELECT task_id FROM task_tags WHERE tag_id IN (${placeholders})
+    )`;
+    params.push(...tagIds);
   }
   
   query += ' ORDER BY t.position ASC';

@@ -38,6 +38,15 @@ const createTask = async ({ columnId, title = 'Sample Task', position = 0 }) => 
   return result.lastID;
 };
 
+const createTag = async (name = 'Tag', color = '#000000') => {
+  const tag = await runAsync(
+    'INSERT INTO tags (name, color) VALUES (?, ?)',
+    [name, color]
+  );
+
+  return tag.lastID;
+};
+
 describe('Tasks API CRUD operations', () => {
   beforeAll(async () => {
     await initDatabase();
@@ -96,5 +105,28 @@ describe('Tasks API CRUD operations', () => {
     expect(response.status).toBe(200);
     expect(response.body).toHaveLength(1);
     expect(response.body[0].column_id).toBe(columnIds[0]);
+  });
+
+  test('filters tasks by tag identifiers', async () => {
+    const { boardId, columnIds } = await createBoardWithColumns();
+    const importantTagId = await createTag('Important', '#ff0000');
+
+    const taggedTaskId = await createTask({ columnId: columnIds[0], title: 'Tagged task', position: 0 });
+    await createTask({ columnId: columnIds[0], title: 'Untagged task', position: 1 });
+
+    await runAsync('INSERT INTO task_tags (task_id, tag_id) VALUES (?, ?)', [taggedTaskId, importantTagId]);
+
+    const response = await request(app)
+      .get('/api/tasks')
+      .query({ boardId, tags: `${importantTagId}` });
+
+    expect(response.status).toBe(200);
+    expect(response.body).toHaveLength(1);
+    expect(response.body[0].id).toBe(taggedTaskId);
+    expect(response.body[0].tags).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ id: importantTagId, name: 'Important' })
+      ])
+    );
   });
 });
