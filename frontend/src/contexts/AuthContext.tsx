@@ -1,9 +1,28 @@
 import React, { createContext, useState, useContext, useEffect } from 'react';
+import axios from 'axios';
 import api from '../services/api';
 
-const AuthContext = createContext();
+export interface AuthUser {
+  id: string;
+  username: string;
+  avatar?: string;
+  email?: string;
+}
 
-export const useAuth = () => {
+interface AuthContextValue {
+  isAuthenticated: boolean;
+  user: AuthUser | null;
+  loading: boolean;
+  login: (username: string, password: string) => Promise<
+    | { success: true }
+    | { success: false; error: string }
+  >;
+  logout: () => void;
+}
+
+const AuthContext = createContext<AuthContextValue | undefined>(undefined);
+
+export const useAuth = (): AuthContextValue => {
   const context = useContext(AuthContext);
   if (!context) {
     throw new Error('useAuth must be used within an AuthProvider');
@@ -11,9 +30,13 @@ export const useAuth = () => {
   return context;
 };
 
-export const AuthProvider = ({ children }) => {
+interface AuthProviderProps {
+  children: React.ReactNode;
+}
+
+export const AuthProvider = ({ children }: AuthProviderProps) => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [user, setUser] = useState(null);
+  const [user, setUser] = useState<AuthUser | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -36,22 +59,26 @@ export const AuthProvider = ({ children }) => {
     }
   }, []);
 
-  const login = async (username, password) => {
+  const login = async (
+    username: string,
+    password: string
+  ): Promise<{ success: true } | { success: false; error: string }> => {
     try {
       const response = await api.post('/api/users/login', { username, password });
-      const { token, user } = response.data;
-      
+      const { token, user: userData } = response.data as { token: string; user: AuthUser };
+
       localStorage.setItem('token', token);
       api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
-      
-      setUser(user);
+
+      setUser(userData);
       setIsAuthenticated(true);
-      
+
       return { success: true };
-    } catch (error) {
-      return { 
-        success: false, 
-        error: error.response?.data?.error || 'Login failed' 
+    } catch (error: unknown) {
+      return {
+        success: false,
+        error:
+          (axios.isAxiosError(error) && error.response?.data?.error) || 'Login failed'
       };
     }
   };

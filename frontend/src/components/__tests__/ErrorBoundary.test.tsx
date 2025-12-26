@@ -1,10 +1,14 @@
 import React from 'react';
+import { describe, it, expect, beforeEach, afterEach, jest } from '@jest/globals';
 import { render, screen, fireEvent } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import ErrorBoundary from '../ErrorBoundary';
 
-// Component that throws an error
-const ThrowError = ({ shouldThrow }) => {
+type ThrowErrorProps = {
+  shouldThrow: boolean;
+};
+
+const ThrowError: React.FC<ThrowErrorProps> = ({ shouldThrow }) => {
   if (shouldThrow) {
     throw new Error('Test error');
   }
@@ -12,13 +16,15 @@ const ThrowError = ({ shouldThrow }) => {
 };
 
 describe('ErrorBoundary', () => {
+  let consoleErrorSpy: jest.SpyInstance;
+
   beforeEach(() => {
     // Suppress console.error for these tests
-    jest.spyOn(console, 'error').mockImplementation(() => {});
+    consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
   });
 
   afterEach(() => {
-    console.error.mockRestore();
+    consoleErrorSpy.mockRestore();
   });
 
   it('renders children when there is no error', () => {
@@ -64,7 +70,8 @@ describe('ErrorBoundary', () => {
 
   it('calls window.history.back when go back button is clicked', () => {
     const mockBack = jest.fn();
-    window.history.back = mockBack;
+    const backSpy = jest.spyOn(window.history, 'back');
+    backSpy.mockImplementation(mockBack);
 
     render(
       <ErrorBoundary>
@@ -74,5 +81,7 @@ describe('ErrorBoundary', () => {
 
     fireEvent.click(screen.getByText('Go Back'));
     expect(mockBack).toHaveBeenCalled();
+
+    backSpy.mockRestore();
   });
 });
