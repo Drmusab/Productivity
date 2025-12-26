@@ -4,16 +4,30 @@
  */
 
 import React, { createContext, useState, useContext, useEffect, useMemo } from 'react';
-import { createTheme } from '@mui/material/styles';
+import { createTheme, Theme } from '@mui/material/styles';
 
-const ThemeContext = createContext();
+type ThemeDirection = 'ltr' | 'rtl';
+type ThemeMode = 'light' | 'dark';
+
+interface ThemeContextValue {
+  theme: Theme;
+  mode: ThemeMode;
+  toggleTheme: () => void;
+}
+
+interface ThemeProviderProps {
+  children: React.ReactNode;
+  direction?: ThemeDirection;
+}
+
+const ThemeContext = createContext<ThemeContextValue | undefined>(undefined);
 
 /**
  * Get theme palette based on mode
  * @param {string} mode - 'light' or 'dark'
  * @returns {Object} Theme palette configuration
  */
-const getPalette = (mode) => ({
+const getPalette = (mode: ThemeMode) => ({
   mode,
   primary: {
     main: mode === 'light' ? '#6366f1' : '#818cf8',
@@ -61,11 +75,11 @@ const getPalette = (mode) => ({
 /**
  * Theme Provider Component
  */
-export const ThemeProvider = ({ children, direction = 'rtl' }) => {
-  const [mode, setMode] = useState(() => {
+export const ThemeProvider = ({ children, direction = 'rtl' }: ThemeProviderProps) => {
+  const [mode, setMode] = useState<ThemeMode>(() => {
     // Load saved preference or default to light
     const saved = localStorage.getItem('theme-mode');
-    return saved || 'light';
+    return saved === 'dark' ? 'dark' : 'light';
   });
 
   useEffect(() => {
@@ -262,7 +276,7 @@ export const ThemeProvider = ({ children, direction = 'rtl' }) => {
 /**
  * Hook to use theme context
  */
-export const useTheme = () => {
+export const useTheme = (): ThemeContextValue => {
   const context = useContext(ThemeContext);
   if (!context) {
     throw new Error('useTheme must be used within ThemeProvider');

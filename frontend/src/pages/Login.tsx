@@ -34,19 +34,21 @@ const Login = () => {
   const { login } = useAuth();
   const navigate = useNavigate();
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setError('');
     setLoading(true);
-    
+
     const result = await login(username, password);
-    
-    if (result.success) {
-      navigate('/boards');
-    } else {
+
+    if (!result.success) {
       setError(result.error);
+      setLoading(false);
+      return;
     }
-    
+
+    navigate('/boards');
+
     setLoading(false);
   };
 
