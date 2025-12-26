@@ -24,8 +24,7 @@ import {
 } from '@mui/icons-material';
 import axios from 'axios';
 import { format } from 'date-fns';
-
-const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:3001';
+import { API_URL } from '../../utils/config';
 
 interface ChronosSettings {
   work_hours_start?: string;

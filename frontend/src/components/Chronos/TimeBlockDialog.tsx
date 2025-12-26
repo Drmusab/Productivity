@@ -19,8 +19,7 @@ import {
   Box
 } from '@mui/material';
 import axios from 'axios';
-
-const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:3001';
+import { API_URL } from '../../utils/config';
 
 const CATEGORIES = [
   'general',

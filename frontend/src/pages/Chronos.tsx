@@ -32,8 +32,7 @@ import AnalystMode from '../components/Chronos/AnalystMode';
 import DailyView from '../components/Chronos/DailyView';
 import ChronosSettings from '../components/Chronos/ChronosSettings';
 import TimeBlockDialog from '../components/Chronos/TimeBlockDialog';
-
-const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:3001';
+import { API_URL } from '../utils/config';
 
 function Chronos() {
   const [currentTab, setCurrentTab] = useState(0);
