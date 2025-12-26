@@ -1,4 +1,4 @@
-import cron = require('node-cron');
+import cron from 'node-cron';
 import {  db  } from '../utils/database';
 import {  triggerAutomation  } from './automation';
 import {  sendTaskDueNotification, sendRoutineReminder  } from './notifications';

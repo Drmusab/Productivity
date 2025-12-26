@@ -4,7 +4,7 @@
  * @module middleware/jwtAuth
  */
 
-import jwt = require('jsonwebtoken');
+import jwt from 'jsonwebtoken';
 
 /**
  * JWT secret from environment variables with a fallback for development.

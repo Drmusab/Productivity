@@ -4,9 +4,9 @@
  * @module services/webhook
  */
 
-import axios = require('axios');
+import axios from 'axios';
 import {  getAsync  } from '../utils/database';
-import logger = require('../utils/logger');
+import logger from '../utils/logger';
 
 /**
  * Default timeout for webhook requests in milliseconds.

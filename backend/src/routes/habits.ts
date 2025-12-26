@@ -4,7 +4,7 @@
  * @module routes/habits
  */
 
-import express = require('express');
+import express from 'express';
 import {  body, validationResult, param, query  } from 'express-validator';
 import {  runAsync, allAsync, getAsync  } from '../utils/database';
 

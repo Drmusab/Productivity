@@ -7,7 +7,7 @@
 import {  allAsync, getAsync, runAsync  } from '../utils/database';
 import {  triggerWebhook  } from './webhook';
 import {  sendNotification  } from './notifications';
-import logger = require('../utils/logger');
+import logger from '../utils/logger';
 
 /**
  * Trigger automation rules based on an event type and associated data.

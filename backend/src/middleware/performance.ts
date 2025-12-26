@@ -4,7 +4,7 @@
  * @module middleware/performance
  */
 
-import logger = require('../utils/logger');
+import logger from '../utils/logger';
 
 /**
  * Express middleware that tracks request processing time and logs slow requests.

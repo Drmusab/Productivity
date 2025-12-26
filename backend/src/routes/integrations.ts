@@ -1,8 +1,8 @@
-import express = require('express');
+import express from 'express';
 const router = express.Router();
 import {  body, validationResult  } from 'express-validator';
 import {  db  } from '../utils/database';
-import axios = require('axios');
+import axios from 'axios';
 
 // Get all integrations
 router.get('/', (req, res) => {

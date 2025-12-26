@@ -5,10 +5,10 @@
  * @module utils/database
  */
 
-import sqlite3Module = require('sqlite3');
-import path = require('path');
-import fs = require('fs');
-import bcrypt = require('bcryptjs');
+import sqlite3Module from 'sqlite3';
+import path from 'path';
+import fs from 'fs';
+import bcrypt from 'bcryptjs';
 
 const sqlite3 = sqlite3Module.verbose();
 
@@ -43,7 +43,7 @@ const db = new sqlite3.Database(resolvedPath);
  * const result = await runAsync('INSERT INTO tasks (title) VALUES (?)', ['New Task']);
  * console.log(result.lastID); // ID of inserted row
  */
-const runAsync = (sql, params = []) => {
+const runAsync = (sql: string, params: any[] = []): Promise<any> => {
   return new Promise((resolve, reject) => {
     db.run(sql, params, function(err) {
       if (err) {
@@ -69,7 +69,7 @@ const runAsync = (sql, params = []) => {
  * const task = await getAsync('SELECT * FROM tasks WHERE id = ?', [1]);
  * console.log(task.title);
  */
-const getAsync = (sql, params = []) => {
+const getAsync = (sql: string, params: any[] = []): Promise<any> => {
   return new Promise((resolve, reject) => {
     db.get(sql, params, (err, row) => {
       if (err) {
@@ -95,7 +95,7 @@ const getAsync = (sql, params = []) => {
  * const tasks = await allAsync('SELECT * FROM tasks WHERE column_id = ?', [1]);
  * tasks.forEach(task => console.log(task.title));
  */
-const allAsync = (sql, params = []) => {
+const allAsync = (sql: string, params: any[] = []): Promise<any[]> => {
   return new Promise((resolve, reject) => {
     db.all(sql, params, (err, rows) => {
       if (err) {

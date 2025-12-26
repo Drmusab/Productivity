@@ -1,8 +1,8 @@
-import express = require('express');
+import express from 'express';
 const router = express.Router();
 import {  body, validationResult  } from 'express-validator';
-import bcrypt = require('bcryptjs');
-import jwt = require('jsonwebtoken');
+import bcrypt from 'bcryptjs';
+import jwt from 'jsonwebtoken';
 
 import {  getAsync, runAsync  } from '../utils/database';
 import {  authenticateToken  } from '../middleware/jwtAuth';

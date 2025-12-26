@@ -4,7 +4,7 @@
  * @module middleware/apiKeyAuth
  */
 
-import crypto = require('crypto');
+import crypto from 'crypto';
 
 /**
  * Middleware enforcing API key authentication for automation/webhook endpoints.

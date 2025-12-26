@@ -5,39 +5,39 @@
  * @module app
  */
 
-import express = require('express');
-import cors = require('cors');
-import helmet = require('helmet');
-import rateLimit = require('express-rate-limit');
-import compression = require('compression');
-import mongoSanitize = require('express-mongo-sanitize');
-import swaggerUi = require('swagger-ui-express');
-import path = require('path');
+import express from 'express';
+import cors from 'cors';
+import helmet from 'helmet';
+import rateLimit from 'express-rate-limit';
+import compression from 'compression';
+import mongoSanitize from 'express-mongo-sanitize';
+import swaggerUi from 'swagger-ui-express';
+import path from 'path';
 require('dotenv').config();
 
-import swaggerSpec = require('./config/swagger');
+import swaggerSpec from './config/swagger';
 
 import {  initDatabase  } from './utils/database';
-import taskRoutes = require('./routes/tasks');
-import boardRoutes = require('./routes/boards');
-import userRoutes = require('./routes/users');
-import integrationRoutes = require('./routes/integrations');
-import automationRoutes = require('./routes/automation');
-import syncRoutes = require('./routes/sync');
-import aiRoutes = require('./routes/ai');
-import reportRoutes = require('./routes/reports');
-import routineRoutes = require('./routes/routines');
-import settingsRoutes = require('./routes/settings');
-import habitRoutes = require('./routes/habits');
-import plannerRoutes = require('./routes/planner');
-import fitnessRoutes = require('./routes/fitness');
-import islamicRoutes = require('./routes/islamic');
-import omniplannerRoutes = require('./routes/omniplanner');
-import chronosRoutes = require('./routes/chronos');
-import calendarRoutes = require('./routes/calendar');
+import taskRoutes from './routes/tasks';
+import boardRoutes from './routes/boards';
+import userRoutes from './routes/users';
+import integrationRoutes from './routes/integrations';
+import automationRoutes from './routes/automation';
+import syncRoutes from './routes/sync';
+import aiRoutes from './routes/ai';
+import reportRoutes from './routes/reports';
+import routineRoutes from './routes/routines';
+import settingsRoutes from './routes/settings';
+import habitRoutes from './routes/habits';
+import plannerRoutes from './routes/planner';
+import fitnessRoutes from './routes/fitness';
+import islamicRoutes from './routes/islamic';
+import omniplannerRoutes from './routes/omniplanner';
+import chronosRoutes from './routes/chronos';
+import calendarRoutes from './routes/calendar';
 import {  startScheduler  } from './services/scheduler';
 import {  requestTimer  } from './middleware/performance';
-import logger = require('./utils/logger');
+import logger from './utils/logger';
 
 /** Express application instance */
 const app = express();

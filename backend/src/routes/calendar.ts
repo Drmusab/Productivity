@@ -4,7 +4,7 @@
  * @module routes/calendar
  */
 
-import express = require('express');
+import express from 'express';
 const router = express.Router();
 import {  query, validationResult  } from 'express-validator';
 import {  db  } from '../utils/database';

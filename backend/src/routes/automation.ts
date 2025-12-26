@@ -1,4 +1,4 @@
-import express = require('express');
+import express from 'express';
 const router = express.Router();
 import {  body, validationResult  } from 'express-validator';
 import {  db, getAsync, runAsync  } from '../utils/database';

@@ -5,13 +5,13 @@
  * @module routes/tasks
  */
 
-import express = require('express');
+import express from 'express';
 const router = express.Router();
 import {  body, query, param, validationResult  } from 'express-validator';
 import {  db  } from '../utils/database';
 import {  recordTaskHistory  } from '../utils/history';
 import {  triggerAutomation  } from '../services/automation';
-import apiKeyAuth = require('../middleware/apiKeyAuth');
+import apiKeyAuth from '../middleware/apiKeyAuth';
 import {  emitEvent  } from '../services/eventBus';
 import {  searchTasks, countTasks  } from '../utils/taskFilters';
 
@@ -625,7 +625,7 @@ router.delete('/:id/tags', (req, res) => {
 });
 
 // Bulk Operations
-import bulkOps = require('../utils/bulkOperations');
+import bulkOps from '../utils/bulkOperations';
 
 /**
  * Bulk update tasks

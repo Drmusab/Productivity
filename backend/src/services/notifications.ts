@@ -7,7 +7,7 @@
 
 import {  allAsync  } from '../utils/database';
 import {  triggerWebhook  } from './webhook';
-import logger = require('../utils/logger');
+import logger from '../utils/logger';
 
 /**
  * Send a notification to configured channels (n8n webhooks).
