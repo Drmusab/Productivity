@@ -8,6 +8,9 @@
 // Main component
 export { RichEditor, type RichEditorProps } from './components/RichEditor';
 
+// Plugins
+export { SlashCommandPlugin } from './plugins/SlashCommandPlugin';
+
 // Configuration
 export {
   editorConfig,

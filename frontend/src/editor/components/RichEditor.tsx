@@ -21,6 +21,7 @@ import {
   defaultCollaborationConfig,
   defaultOfflineConfig,
 } from '../config/editorConfig';
+import { SlashCommandPlugin } from '../plugins/SlashCommandPlugin';
 import './RichEditor.css';
 
 /**
@@ -159,8 +160,9 @@ export function RichEditor({
           <ListPlugin />
           <LinkPlugin />
           
-          {/* TODO: Add custom plugins */}
-          {/* <SlashCommandPlugin /> */}
+          {/* Custom plugins */}
+          <SlashCommandPlugin />
+          {/* TODO: Add more plugins */}
           {/* <DragDropPlugin /> */}
           {/* <FormattingToolbarPlugin /> */}
           {/* <MentionsPlugin /> */}
