@@ -21,7 +21,15 @@ const frequencyOptions = [
   { value: 'yearly', label: 'Yearly' },
 ];
 
-const RoutineDialog = ({ open, onClose, onSave, initialValues, columns }) => {
+interface RoutineDialogProps {
+  open: boolean;
+  onClose: () => void;
+  onSave: (formValues: any) => void;
+  initialValues?: any;
+  columns?: any[];
+}
+
+const RoutineDialog: React.FC<RoutineDialogProps> = ({ open, onClose, onSave, initialValues, columns }) => {
   const columnOptions = useMemo(() => columns || [], [columns]);
   const [formValues, setFormValues] = useState({
     title: '',
@@ -58,7 +66,7 @@ const RoutineDialog = ({ open, onClose, onSave, initialValues, columns }) => {
     }
   }, [initialValues, columnOptions]);
 
-  const handleChange = (field) => (event) => {
+  const handleChange = (field: string) => (event: any) => {
     setFormValues(prev => ({
       ...prev,
       [field]: event.target.value,

@@ -36,15 +36,33 @@ const GOAL_TYPES = [
   { value: 'timer', label: 'Timer (e.g., 30 minutes exercise)' },
 ];
 
-const HabitDialog = ({ open, onClose, onSave, initialValues = null }) => {
-  const [name, setName] = useState('');
-  const [description, setDescription] = useState('');
-  const [category, setCategory] = useState('general');
-  const [goalType, setGoalType] = useState('binary');
-  const [goalValue, setGoalValue] = useState(1);
-  const [goalUnit, setGoalUnit] = useState('');
-  const [color, setColor] = useState('#3498db');
-  const [errors, setErrors] = useState({});
+interface HabitValues {
+  name?: string;
+  description?: string;
+  category?: string;
+  goalType?: string;
+  goalValue?: number;
+  goalUnit?: string;
+  color?: string;
+  [key: string]: any;
+}
+
+interface HabitDialogProps {
+  open: boolean;
+  onClose: () => void;
+  onSave: (payload: any) => void;
+  initialValues?: HabitValues | null;
+}
+
+const HabitDialog: React.FC<HabitDialogProps> = ({ open, onClose, onSave, initialValues = null }) => {
+  const [name, setName] = useState<string>('');
+  const [description, setDescription] = useState<string>('');
+  const [category, setCategory] = useState<string>('general');
+  const [goalType, setGoalType] = useState<string>('binary');
+  const [goalValue, setGoalValue] = useState<number>(1);
+  const [goalUnit, setGoalUnit] = useState<string>('');
+  const [color, setColor] = useState<string>('#3498db');
+  const [errors, setErrors] = useState<any>({});
 
   const isEditing = Boolean(initialValues);
 
@@ -71,7 +89,7 @@ const HabitDialog = ({ open, onClose, onSave, initialValues = null }) => {
   }, [initialValues, open]);
 
   const validate = () => {
-    const newErrors = {};
+    const newErrors: any = {};
     if (!name.trim()) {
       newErrors.name = 'Habit name is required';
     }

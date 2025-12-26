@@ -8,7 +8,19 @@ import {
   Button
 } from '@mui/material';
 
-const ConfirmDialog = ({
+interface ConfirmDialogProps {
+  open: boolean;
+  title?: string;
+  message: string;
+  confirmText?: string;
+  cancelText?: string;
+  onConfirm: () => void;
+  onCancel: () => void;
+  confirmColor?: 'primary' | 'secondary' | 'error' | 'info' | 'success' | 'warning' | 'inherit';
+  dangerous?: boolean;
+}
+
+const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
   open,
   title = 'Confirm Action',
   message,

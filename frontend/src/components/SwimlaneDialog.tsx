@@ -17,8 +17,23 @@ import {
 } from '@mui/material';
 import { Close } from '@mui/icons-material';
 
-const SwimlaneDialog = ({ open, swimlane, onClose, onSave }) => {
-  const [formData, setFormData] = useState({
+interface Swimlane {
+  id?: number;
+  name: string;
+  color: string;
+  position: number;
+  collapsed: boolean;
+}
+
+interface SwimlaneDialogProps {
+  open: boolean;
+  swimlane?: Swimlane | null;
+  onClose: () => void;
+  onSave: (formData: Swimlane) => void;
+}
+
+const SwimlaneDialog: React.FC<SwimlaneDialogProps> = ({ open, swimlane, onClose, onSave }) => {
+  const [formData, setFormData] = useState<Swimlane>({
     name: '',
     color: '#ecf0f1',
     position: 0,
@@ -38,7 +53,7 @@ const SwimlaneDialog = ({ open, swimlane, onClose, onSave }) => {
     }
   }, [swimlane, open]);
 
-  const handleChange = (e) => {
+  const handleChange = (e: any) => {
     const { name, value, type, checked } = e.target;
     setFormData(prev => ({
       ...prev,

@@ -2,8 +2,18 @@ import React from 'react';
 import { Box, Typography, Button, Paper } from '@mui/material';
 import { ErrorOutline } from '@mui/icons-material';
 
-class ErrorBoundary extends React.Component {
-  constructor(props) {
+interface ErrorBoundaryProps {
+  children: React.ReactNode;
+}
+
+interface ErrorBoundaryState {
+  hasError: boolean;
+  error: Error | null;
+  errorInfo: React.ErrorInfo | null;
+}
+
+class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoundaryState> {
+  constructor(props: ErrorBoundaryProps) {
     super(props);
     this.state = {
       hasError: false,
@@ -12,11 +22,11 @@ class ErrorBoundary extends React.Component {
     };
   }
 
-  static getDerivedStateFromError(error) {
+  static getDerivedStateFromError(error: Error) {
     return { hasError: true };
   }
 
-  componentDidCatch(error, errorInfo) {
+  componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
     console.error('ErrorBoundary caught an error:', error, errorInfo);
     this.setState({
       error,
@@ -81,7 +91,7 @@ class ErrorBoundary extends React.Component {
                 }}
               >
                 <Typography variant="caption" component="pre" sx={{ whiteSpace: 'pre-wrap' }}>
-                  {this.state.error.toString()}
+                  {this.state.error?.toString()}
                   {this.state.errorInfo?.componentStack}
                 </Typography>
               </Box>
