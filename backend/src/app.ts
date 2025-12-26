@@ -5,7 +5,7 @@
  * @module app
  */
 
-import express from 'express';
+import express, { Application, Request, Response, NextFunction } from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
 import rateLimit from 'express-rate-limit';
@@ -13,7 +13,9 @@ import compression from 'compression';
 import mongoSanitize from 'express-mongo-sanitize';
 import swaggerUi from 'swagger-ui-express';
 import path from 'path';
-require('dotenv').config();
+import dotenv from 'dotenv';
+
+dotenv.config();
 
 import swaggerSpec from './config/swagger';
 
@@ -40,14 +42,14 @@ import {  requestTimer  } from './middleware/performance';
 import logger from './utils/logger';
 
 /** Express application instance */
-const app = express();
+const app: Application = express();
 
 /** Server port from environment or default to 3001 */
 const PORT = process.env.PORT || 3001;
 
 // Compression middleware - gzip compression for responses
 app.use(compression({
-  filter: (req, res) => {
+  filter: (req: Request, res: Response) => {
     if (req.headers['x-no-compression']) {
       return false;
     }
@@ -111,7 +113,7 @@ app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec, {
 }));
 
 // Swagger JSON endpoint
-app.get('/api-docs.json', (req, res) => {
+app.get('/api-docs.json', (req: Request, res: Response) => {
   res.setHeader('Content-Type', 'application/json');
   res.send(swaggerSpec);
 });
@@ -143,7 +145,7 @@ import {  errorHandler  } from './middleware/errorHandler';
  * @name GET /api/health
  * @function
  */
-app.get('/api/health', (req, res) => {
+app.get('/api/health', (req: Request, res: Response) => {
   res.status(200).json({ status: 'OK', timestamp: new Date().toISOString() });
 });
 
@@ -152,8 +154,8 @@ app.get('/api/health', (req, res) => {
  * Returns 404 with error message.
  * @function
  */
-app.use((req, res, next) => {
-  res.status(404).json({ 
+app.use((req: Request, res: Response, next: NextFunction) => {
+  res.status(404).json({
     error: 'Not Found',
     message: `Cannot ${req.method} ${req.url}`,
     statusCode: 404

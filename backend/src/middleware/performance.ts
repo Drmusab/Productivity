@@ -1,11 +1,18 @@
-// @ts-nocheck
 /**
  * @fileoverview Performance monitoring middleware and utilities for tracking request timing and database queries.
  * Provides request timing, execution measurement, and slow query detection.
  * @module middleware/performance
  */
 
+import { Request, Response, NextFunction } from 'express';
 import logger from '../utils/logger';
+
+type TrackedQuery = {
+  query: string;
+  params: unknown[];
+  duration: number;
+  timestamp: string;
+};
 
 /**
  * Express middleware that tracks request processing time and logs slow requests.
@@ -19,14 +26,14 @@ import logger from '../utils/logger';
  * @example
  * app.use(requestTimer); // Register globally to track all requests
  */
-const requestTimer = (req, res, next) => {
+const requestTimer = (req: Request, res: Response, next: NextFunction): void => {
   const startTime = Date.now();
-  
+
   // Store original end function
-  const originalEnd = res.end;
-  
+  const originalEnd = res.end.bind(res);
+
   // Override end function to log timing
-  res.end = function(...args) {
+  res.end = ((...args: Parameters<typeof res.end>) => {
     const duration = Date.now() - startTime;
     
     // Log slow requests (> 1000ms)
@@ -43,8 +50,8 @@ const requestTimer = (req, res, next) => {
     }
     
     // Call original end function
-    originalEnd.apply(res, args);
-  };
+    return originalEnd(...args);
+  }) as typeof res.end;
   
   next();
 };
@@ -64,7 +71,7 @@ const requestTimer = (req, res, next) => {
  *   return await database.getAllTasks();
  * });
  */
-const measureTime = async (name, fn) => {
+const measureTime = async <T>(name: string, fn: () => Promise<T>): Promise<T> => {
   const startTime = Date.now();
   
   try {
@@ -74,14 +81,14 @@ const measureTime = async (name, fn) => {
     logger.debug(`${name} completed`, { duration: `${duration}ms` });
     
     return result;
-  } catch (error) {
+  } catch (error: unknown) {
     const duration = Date.now() - startTime;
-    
-    logger.error(`${name} failed`, { 
+
+    logger.error(`${name} failed`, {
       duration: `${duration}ms`,
-      error: error.message 
+      error: error instanceof Error ? error.message : 'Unknown error'
     });
-    
+
     throw error;
   }
 };
@@ -94,16 +101,18 @@ const measureTime = async (name, fn) => {
  * @class QueryPerformanceTracker
  */
 class QueryPerformanceTracker {
+  private readonly enabled: boolean;
+  private queries: TrackedQuery[] = [];
+
   /**
    * Creates a QueryPerformanceTracker instance.
    * Tracking is enabled in development or when ENABLE_QUERY_TRACKING=true.
-   * 
+   *
    * @constructor
    */
   constructor() {
-    this.queries = [];
     // Make query tracking configurable via environment variable
-    this.enabled = process.env.ENABLE_QUERY_TRACKING === 'true' || 
+    this.enabled = process.env.ENABLE_QUERY_TRACKING === 'true' ||
                    process.env.NODE_ENV === 'development';
   }
   
@@ -119,7 +128,7 @@ class QueryPerformanceTracker {
    * @example
    * queryTracker.track('SELECT * FROM tasks WHERE id = ?', [123], 45);
    */
-  track(query, params, duration) {
+  track(query: string, params: unknown[], duration: number): void {
     if (!this.enabled) return;
     
     this.queries.push({
@@ -158,7 +167,9 @@ class QueryPerformanceTracker {
    * const stats = queryTracker.getStats();
    * console.log(`Average: ${stats.avgDuration}, Slow queries: ${stats.slowQueries}`);
    */
-  getStats() {
+  getStats():
+  | { message: string }
+  | { count: number; avgDuration: string; maxDuration: string; minDuration: string; slowQueries: number } {
     if (!this.enabled || this.queries.length === 0) {
       return { message: 'No query data available' };
     }
@@ -186,7 +197,7 @@ class QueryPerformanceTracker {
    * @example
    * queryTracker.reset(); // Clear all tracked queries
    */
-  reset() {
+  reset(): void {
     this.queries = [];
   }
 }
@@ -197,6 +208,4 @@ class QueryPerformanceTracker {
  */
 const queryTracker = new QueryPerformanceTracker();
 
-export { requestTimer };
-export { measureTime };
-export { queryTracker };
+export { requestTimer, measureTime, queryTracker, TrackedQuery };

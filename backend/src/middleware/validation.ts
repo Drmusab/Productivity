@@ -1,11 +1,11 @@
-// @ts-nocheck
 /**
  * @fileoverview Validation error handling middleware for express-validator.
  * Processes validation errors from express-validator and returns formatted error responses.
  * @module middleware/validation
  */
 
-import {  validationResult  } from 'express-validator';
+import { validationResult } from 'express-validator';
+import { Request, Response, NextFunction } from 'express';
 
 /**
  * Middleware to handle validation errors from express-validator rules.
@@ -24,14 +24,14 @@ import {  validationResult  } from 'express-validator';
  *   createTask
  * );
  */
-const handleValidationErrors = (req, res, next) => {
+const handleValidationErrors = (req: Request, res: Response, next: NextFunction) => {
   const errors = validationResult(req);
   
   if (!errors.isEmpty()) {
     const formattedErrors = errors.array().map(err => ({
-      field: err.param,
+      field: 'path' in err ? err.path : 'unknown',
       message: err.msg,
-      value: err.value
+      value: 'value' in err ? (err as { value: unknown }).value : undefined
     }));
     
     return res.status(400).json({ 
@@ -43,4 +43,4 @@ const handleValidationErrors = (req, res, next) => {
   next();
 };
 
-export = handleValidationErrors;
+export default handleValidationErrors;

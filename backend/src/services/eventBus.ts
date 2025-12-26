@@ -1,4 +1,3 @@
-// @ts-nocheck
 /**
  * @fileoverview Event bus service for real-time event streaming and synchronization across clients.
  * Implements an in-memory event buffer with Server-Sent Events (SSE) support for live updates.
@@ -6,6 +5,7 @@
  */
 
 import {  EventEmitter  } from 'events';
+import { BusEvent, EventListener, EventPayload } from '../types';
 
 /**
  * Maximum number of events to buffer in memory.
@@ -26,7 +26,7 @@ const eventEmitter = new EventEmitter();
  * @private
  * @type {Array<Object>}
  */
-const bufferedEvents = [];
+const bufferedEvents: BusEvent[] = [];
 
 /**
  * Normalizes various boolean representations to a JavaScript boolean.
@@ -42,7 +42,7 @@ const bufferedEvents = [];
  * normalizeBoolean('yes')   // Returns: true
  * normalizeBoolean(0)       // Returns: false
  */
-const normalizeBoolean = (value) => {
+const normalizeBoolean = (value: unknown): boolean | undefined => {
   if (value === undefined || value === null) {
     return undefined;
   }
@@ -74,7 +74,7 @@ const normalizeBoolean = (value) => {
  * toNumericBoolean(false)  // Returns: 0
  * toNumericBoolean('yes')  // Returns: 1
  */
-const toNumericBoolean = (value) => {
+const toNumericBoolean = (value: unknown): number | undefined => {
   const normalized = normalizeBoolean(value);
   if (normalized === undefined) {
     return undefined;
@@ -95,8 +95,8 @@ const toNumericBoolean = (value) => {
  * emitEvent('task', 'created', { id: 123, title: 'New Task' });
  * emitEvent('board', 'updated', { id: 1, name: 'Updated Board' });
  */
-const emitEvent = (resource, action, payload) => {
-  const event = {
+const emitEvent = (resource: string, action: string, payload: EventPayload): BusEvent => {
+  const event: BusEvent = {
     id: `${Date.now()}-${Math.random().toString(16).slice(2)}`,
     resource,
     action,
@@ -128,7 +128,7 @@ const emitEvent = (resource, action, payload) => {
  * });
  * // Later: unsubscribe();
  */
-const subscribe = (listener) => {
+const subscribe = (listener: EventListener) => {
   eventEmitter.on('event', listener);
   return () => eventEmitter.off('event', listener);
 };
@@ -144,7 +144,7 @@ const subscribe = (listener) => {
  * parseSinceParam('2024-01-01T00:00:00Z') // Returns: Date object
  * parseSinceParam('invalid')               // Returns: undefined
  */
-const parseSinceParam = (since) => {
+const parseSinceParam = (since?: string) => {
   if (!since) {
     return undefined;
   }
@@ -171,7 +171,7 @@ const parseSinceParam = (since) => {
  * getEventsSince({ since: '2024-01-01T00:00:00Z', limit: 10 });
  * getEventsSince({ lastEventId: '1234567890-abc', limit: 50 });
  */
-const getEventsSince = ({ since, lastEventId, limit } = {}) => {
+const getEventsSince = ({ since, lastEventId, limit }: { since?: string; lastEventId?: string; limit?: number | string } = {}) => {
   let events = [...bufferedEvents];
 
   // Filter by last event ID if provided
@@ -210,12 +210,8 @@ const getEventsSince = ({ since, lastEventId, limit } = {}) => {
  * @example
  * resetEvents(); // Clears all buffered events
  */
-const resetEvents = () => {
+const resetEvents = (): void => {
   bufferedEvents.length = 0;
 };
 
-export { emitEvent };
-export { subscribe };
-export { getEventsSince };
-export { toNumericBoolean };
-export { resetEvents };
+export { emitEvent, subscribe, getEventsSince, toNumericBoolean, resetEvents };
