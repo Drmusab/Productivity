@@ -1,8 +1,23 @@
 # Productivity OS
 
-An Obsidian-style productivity platform combining note-taking, task management, and productivity modules into a cohesive workspace. Built with TypeScript end-to-end, Docker-first architecture, and offline-first design.
+An **offline-first**, **Docker-first** productivity platform combining Obsidian-style note-taking, task management, and modular productivity tools. Built with **TypeScript end-to-end** using strict mode and Zod schemas.
 
-> **Note**: This is a refactored version of the AI-Integrated Task Manager, restructured as a unified "Productivity OS" with proper monorepo organization.
+## ✨ Core Philosophy
+
+### 🔒 Offline-First
+- **You own your data** - works entirely without internet
+- Local storage (IndexedDB + SQLite) with optional cloud sync
+- CRDT-based conflict resolution using Yjs
+
+### 🐳 Docker-First
+- Complete containerization from database to frontend
+- Reproducible dev and production environments
+- Persistent volumes for data safety
+
+### 📘 TypeScript End-to-End
+- Strict mode enforced (no `any` types)
+- Zod schemas for runtime validation
+- Shared types across frontend and backend
 
 ---
 
@@ -64,21 +79,92 @@ docker compose --profile prod up -d
 
 ---
 
-## 📁 Project Structure
+## 📁 Monorepo Structure
 
 ```
 productivity-os/
 ├── apps/
-│   ├── desktop/          # React frontend (Electron-ready)
-│   └── backend/          # Node.js API server
+│   ├── desktop/              # React frontend (Electron-ready)
+│   └── backend/              # Node.js API server
 ├── packages/
-│   └── shared/           # Shared TypeScript types
-├── infra/
-│   └── docker/           # Docker configuration
-├── scripts/              # CLI utilities (migrate, backup, seed)
-├── docs/                 # Documentation
-└── docker-compose.yml    # Root compose file
+│   ├── core/                 # Types, Markdown Parser, AST, Knowledge Graph
+│   ├── db/                   # IndexedDB adapter & CRDT sync (Yjs)
+│   ├── ui/                   # Shared Tailwind components (Command Palette)
+│   ├── modules/              # Productivity plugins (Kanban, Pomodoro)
+│   └── shared/               # Legacy (migrating to core)
+├── infra/docker/             # Docker configuration
+├── docs/                     # Documentation
+├── scripts/                  # CLI utilities
+├── tsconfig.json            # Root TypeScript config
+└── docker-compose.yml       # Root compose file
 ```
+
+### New Packages
+
+#### 📦 @productivity-os/core
+Foundation layer with type definitions, markdown parsing, and knowledge graph:
+- **Wikilinks**: `[[Note Name]]` and `[[Note|Alias]]` support
+- **Frontmatter**: YAML metadata parsing
+- **Knowledge Graph**: Backlinks, orphan notes, hub detection
+- **AST Manipulation**: unified/remark for markdown processing
+
+#### 📦 @productivity-os/db
+Local-first database with offline support:
+- **IndexedDB Adapter**: Browser-based storage
+- **CRDT Sync**: Conflict-free replication with Yjs
+- **Sync Queue**: Eventual consistency when online
+- **SQLite**: Server-side database
+
+#### 📦 @productivity-os/ui
+Shared React components:
+- **Command Palette**: Global CMD+K interface
+- **Tailwind Utilities**: Class merging and composition
+
+#### 📦 @productivity-os/modules
+Productivity feature modules:
+- **Kanban**: Board and column management
+- **Pomodoro**: Focus timer with session tracking
+- **Calendar**: (Coming soon)
+- **PARA**: (Coming soon)
+
+---
+
+## 🎯 Key Features
+
+### Vault System (Obsidian-style)
+- ✅ **Wikilinks**: `[[Note Title]]` syntax with automatic backlink detection
+- ✅ **Knowledge Graph**: Query relationships without visualization overhead
+- ✅ **Frontmatter**: YAML metadata support
+- ✅ **Unresolved Links**: Track missing notes
+- ✅ **Block References**: Link to specific blocks within notes
+
+### Offline-First Architecture  
+- ✅ **IndexedDB Storage**: All data available offline
+- ✅ **CRDT Sync**: Automatic conflict resolution using Yjs
+- ✅ **Sync Queue**: Operations queued and synced when online
+- ✅ **Progressive Enhancement**: App works with or without network
+
+### Developer Experience
+- ✅ **TypeScript Strict Mode**: No `any` types allowed
+- ✅ **Zod Schemas**: Runtime validation with type inference
+- ✅ **Project References**: Incremental builds
+- ✅ **Hot Reload**: Fast development iteration
+- ✅ **Command Palette**: CMD+K global command interface
+
+### Productivity Modules
+- ✅ **Kanban Boards**: Visual task management
+- ✅ **Pomodoro Timer**: Focus sessions with tracking
+- ⏳ **Calendar Integration**: (In progress)
+- ⏳ **PARA Method**: (In progress)
+- ⏳ **Time Blocking**: (Planned)
+
+---
+
+## 📖 Documentation
+
+- **[Architecture Guide](./docs/ARCHITECTURE.md)**: System design and data flow
+- **[Development Guide](./docs/DEVELOPMENT_GUIDE.md)**: Setup and coding standards
+- **[API Documentation](./docs/CODE_DOCUMENTATION.md)**: Complete API reference
 
 ---
 
