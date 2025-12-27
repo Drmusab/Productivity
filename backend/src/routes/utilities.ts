@@ -8,7 +8,7 @@
 import express from 'express';
 import { body, validationResult, param } from 'express-validator';
 import { runAsync, allAsync, getAsync } from '../utils/database';
-import { v4 as uuidv4 } from 'uuid';
+import { randomUUID } from 'crypto';
 
 const router = express.Router();
 
@@ -196,7 +196,7 @@ router.post('/quotes', [
 
   try {
     const { content, author, source, category, tags = [] } = req.body;
-    const id = uuidv4();
+    const id = randomUUID();
 
     await runAsync(
       `INSERT INTO quotes (id, content, author, source, category, tags) VALUES (?, ?, ?, ?, ?, ?)`,
@@ -404,7 +404,7 @@ router.post('/words', [
       origin, synonyms = [], antonyms = [], category, tags = []
     } = req.body;
     
-    const id = uuidv4();
+    const id = randomUUID();
 
     await runAsync(
       `INSERT INTO words (id, word, definition, pronunciation, part_of_speech, example_sentence, origin, synonyms, antonyms, category, tags)
@@ -547,7 +547,7 @@ router.post('/sticky-boards', [
 
   try {
     const { name, description, background_color } = req.body;
-    const id = uuidv4();
+    const id = randomUUID();
 
     await runAsync(
       `INSERT INTO sticky_boards (id, name, description, background_color) VALUES (?, ?, ?, ?)`,
@@ -603,7 +603,7 @@ router.post('/sticky-notes', [
 
   try {
     const { content, color = '#fef3c7', position_x = 0, position_y = 0, width = 200, height = 200, board_id } = req.body;
-    const id = uuidv4();
+    const id = randomUUID();
 
     await runAsync(
       `INSERT INTO sticky_notes (id, content, color, position_x, position_y, width, height, board_id)

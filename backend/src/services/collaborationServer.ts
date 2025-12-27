@@ -8,7 +8,6 @@
 import { Server as SocketIOServer, Socket } from 'socket.io';
 import { Server as HTTPServer } from 'http';
 import * as Y from 'yjs';
-import { v4 as uuidv4 } from 'uuid';
 
 /**
  * Collaboration room state

@@ -5,7 +5,7 @@
  * Built on top of the block system and query engine.
  */
 
-import { v4 as uuidv4 } from 'uuid';
+import { randomUUID } from 'crypto';
 import { BlockCRUDEngine } from './blockCRUD';
 import { DatabaseQueryEngine } from './databaseQueryEngine';
 import { BlockType, DatabaseBlockData, DatabaseRowBlockData, Block } from '../types/blocks';
@@ -155,7 +155,7 @@ export class DatabaseService {
     
     const newProperty: Property = {
       ...property,
-      id: uuidv4(),
+      id: randomUUID(),
     } as Property;
     
     db.properties.push(newProperty);
@@ -330,7 +330,7 @@ export class DatabaseService {
     const now = new Date().toISOString();
     const newView: DatabaseView = {
       ...view,
-      id: uuidv4(),
+      id: randomUUID(),
       createdAt: now,
       updatedAt: now,
     } as DatabaseView;
