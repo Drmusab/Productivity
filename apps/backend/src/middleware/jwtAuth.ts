@@ -5,6 +5,8 @@
  */
 
 import jwt from 'jsonwebtoken';
+import { Request, Response, NextFunction } from 'express';
+import { AuthenticatedRequest } from '../types';
 
 /**
  * JWT secret from environment variables with a fallback for development.
@@ -12,6 +14,16 @@ import jwt from 'jsonwebtoken';
  * @private
  */
 const JWT_SECRET = process.env.JWT_SECRET || 'change-this-secret';
+
+/**
+ * JWT payload interface
+ */
+interface JWTPayload {
+  id: number;
+  username: string;
+  email: string;
+  role?: string;
+}
 
 /**
  * Middleware enforcing JWT token authentication for protected endpoints.
@@ -28,7 +40,7 @@ const JWT_SECRET = process.env.JWT_SECRET || 'change-this-secret';
  *   res.json({ userId: req.user.id });
  * });
  */
-const authenticateToken = (req, res, next) => {
+const authenticateToken = (req: Request, res: Response, next: NextFunction): void | Response => {
   const authHeader = req.headers.authorization || '';
   const [scheme, token] = authHeader.split(' ');
 
@@ -37,8 +49,8 @@ const authenticateToken = (req, res, next) => {
   }
 
   try {
-    const decoded = jwt.verify(token, JWT_SECRET);
-    req.user = decoded;
+    const decoded = jwt.verify(token, JWT_SECRET) as JWTPayload;
+    (req as AuthenticatedRequest).user = decoded;
     next();
   } catch (error) {
     return res.status(401).json({ error: 'Invalid or expired token' });
@@ -64,14 +76,14 @@ const authenticateToken = (req, res, next) => {
  *   }
  * });
  */
-const optionalAuth = (req, res, next) => {
+const optionalAuth = (req: Request, res: Response, next: NextFunction): void => {
   const authHeader = req.headers.authorization || '';
   const [scheme, token] = authHeader.split(' ');
 
   if (token && scheme?.toLowerCase() === 'bearer') {
     try {
-      const decoded = jwt.verify(token, JWT_SECRET);
-      req.user = decoded;
+      const decoded = jwt.verify(token, JWT_SECRET) as JWTPayload;
+      (req as AuthenticatedRequest).user = decoded;
     } catch (error) {
       // Token is invalid, but we continue without setting req.user
     }

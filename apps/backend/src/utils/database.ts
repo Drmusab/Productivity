@@ -33,6 +33,19 @@ const db = new sqlite3.Database(resolvedPath);
 db.run('PRAGMA foreign_keys = ON');
 
 /**
+ * Database parameter type - values that can be used as SQL parameters
+ */
+type DatabaseParam = string | number | boolean | null | undefined;
+
+/**
+ * Result of a SQL run statement
+ */
+interface RunResult {
+  lastID: number;
+  changes: number;
+}
+
+/**
  * Executes a SQL statement that modifies the database (INSERT, UPDATE, DELETE, CREATE, etc.).
  * Returns a promise that resolves with the result object containing lastID and changes.
  * 
@@ -46,7 +59,7 @@ db.run('PRAGMA foreign_keys = ON');
  * const result = await runAsync('INSERT INTO tasks (title) VALUES (?)', ['New Task']);
  * console.log(result.lastID); // ID of inserted row
  */
-const runAsync = (sql: string, params: any[] = []): Promise<any> => {
+const runAsync = (sql: string, params: DatabaseParam[] = []): Promise<RunResult> => {
   return new Promise((resolve, reject) => {
     db.run(sql, params, function(err) {
       if (err) {
@@ -72,13 +85,13 @@ const runAsync = (sql: string, params: any[] = []): Promise<any> => {
  * const task = await getAsync('SELECT * FROM tasks WHERE id = ?', [1]);
  * console.log(task.title);
  */
-const getAsync = (sql: string, params: any[] = []): Promise<any> => {
+const getAsync = <T = Record<string, unknown>>(sql: string, params: DatabaseParam[] = []): Promise<T | undefined> => {
   return new Promise((resolve, reject) => {
     db.get(sql, params, (err, row) => {
       if (err) {
         reject(err);
       } else {
-        resolve(row);
+        resolve(row as T | undefined);
       }
     });
   });
@@ -98,13 +111,13 @@ const getAsync = (sql: string, params: any[] = []): Promise<any> => {
  * const tasks = await allAsync('SELECT * FROM tasks WHERE column_id = ?', [1]);
  * tasks.forEach(task => console.log(task.title));
  */
-const allAsync = (sql: string, params: any[] = []): Promise<any[]> => {
+const allAsync = <T = Record<string, unknown>>(sql: string, params: DatabaseParam[] = []): Promise<T[]> => {
   return new Promise((resolve, reject) => {
     db.all(sql, params, (err, rows) => {
       if (err) {
         reject(err);
       } else {
-        resolve(rows);
+        resolve(rows as T[]);
       }
     });
   });
@@ -1164,7 +1177,7 @@ const initDatabase = (): Promise<void> => {
             { name: 'Cardio', description: 'Cardiovascular exercises' }
           ];
 
-          const groupIds = {};
+          const groupIds: Record<string, number> = {};
           for (const group of mainGroups) {
             const result = await runAsync(
               'INSERT INTO muscle_groups (name, description) VALUES (?, ?)',
@@ -1328,8 +1341,9 @@ const clearDatabase = async () => {
     for (const table of TABLES_IN_DELETE_ORDER) {
       try {
         await runAsync(`DELETE FROM ${table}`);
-      } catch (error: any) {
-        if (error.message && error.message.includes('no such table')) {
+      } catch (error: unknown) {
+        const err = error as Error;
+        if (err.message && err.message.includes('no such table')) {
           // Skip tables that are not present in the current schema
           continue;
         }

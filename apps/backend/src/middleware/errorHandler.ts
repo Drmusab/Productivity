@@ -12,11 +12,11 @@ import logger from '../utils/logger';
  */
 class AppError extends Error {
   statusCode: number;
-  details: any;
+  details: unknown;
   isOperational: boolean;
   code?: string;
 
-  constructor(message: string, statusCode: number = 500, details: any = null, code?: string) {
+  constructor(message: string, statusCode: number = 500, details: unknown = null, code?: string) {
     super(message);
     this.statusCode = statusCode;
     this.details = details;
@@ -30,7 +30,7 @@ class AppError extends Error {
  * Validation error for input validation failures
  */
 class ValidationError extends AppError {
-  constructor(message: string = 'Validation failed', details: any = null) {
+  constructor(message: string = 'Validation failed', details: unknown = null) {
     super(message, 400, details, 'VALIDATION_ERROR');
     this.name = 'ValidationError';
   }
@@ -80,7 +80,7 @@ class ConflictError extends AppError {
  * Database error for database operation failures
  */
 class DatabaseError extends AppError {
-  constructor(message: string = 'Database operation failed', details: any = null) {
+  constructor(message: string = 'Database operation failed', details: unknown = null) {
     super(message, 500, details, 'DATABASE_ERROR');
     this.name = 'DatabaseError';
   }
@@ -101,11 +101,13 @@ class RateLimitError extends AppError {
  */
 const SENSITIVE_FIELDS = ['password', 'token', 'apiKey', 'api_key', 'secret', 'authorization', 'password_hash', 'jwt', 'bearer'];
 
+type SanitizedBody = Record<string, unknown> | unknown[] | unknown;
+
 /**
  * Sanitizes request body by redacting sensitive fields from logs.
  * Uses deep traversal to catch nested sensitive data.
  */
-const sanitizeBody = (body: any, depth: number = 0): any => {
+const sanitizeBody = (body: unknown, depth: number = 0): SanitizedBody => {
   if (depth > 5 || !body || typeof body !== 'object') {
     return body;
   }
@@ -114,8 +116,8 @@ const sanitizeBody = (body: any, depth: number = 0): any => {
     return body.map(item => sanitizeBody(item, depth + 1));
   }
   
-  const sanitized: any = {};
-  for (const [key, value] of Object.entries(body)) {
+  const sanitized: Record<string, unknown> = {};
+  for (const [key, value] of Object.entries(body as Record<string, unknown>)) {
     const lowerKey = key.toLowerCase();
     if (SENSITIVE_FIELDS.some(field => lowerKey.includes(field))) {
       sanitized[key] = '[REDACTED]';
@@ -137,17 +139,40 @@ const generateCorrelationId = (): string => {
 };
 
 /**
+ * Error object with extended properties for error handling
+ */
+interface ExtendedError extends Error {
+  statusCode?: number;
+  details?: unknown;
+  isOperational?: boolean;
+  code?: string;
+}
+
+/**
+ * Error response interface
+ */
+interface ErrorResponse {
+  error: string;
+  statusCode: number;
+  code: string;
+  correlationId: string;
+  details?: unknown;
+  stack?: string[];
+  timestamp?: string;
+}
+
+/**
  * Express error handling middleware that processes all errors in the application.
  * Provides comprehensive error logging, sanitization, and consistent responses.
  */
-const errorHandler = (err: any, req: Request, res: Response, _next: NextFunction): void => {
+const errorHandler = (err: ExtendedError, req: Request, res: Response, _next: NextFunction): void => {
   // Generate correlation ID for tracking
   const correlationId = generateCorrelationId();
   
   // Set defaults
   let statusCode = err.statusCode || 500;
   let message = err.message || 'Internal Server Error';
-  let details = err.details || null;
+  let details: unknown = err.details || null;
   let code = err.code || 'INTERNAL_SERVER_ERROR';
 
   // Log error for debugging (skip in test environment)
@@ -211,7 +236,7 @@ const errorHandler = (err: any, req: Request, res: Response, _next: NextFunction
   }
 
   // Build response object
-  const response: any = {
+  const response: ErrorResponse = {
     error: message,
     statusCode,
     code,
@@ -255,7 +280,7 @@ const asyncHandler = (fn: RequestHandler): RequestHandler => {
 const createErrorResponse = (
   statusCode: number,
   message: string,
-  details?: any,
+  details?: unknown,
   code?: string
 ) => {
   return new AppError(message, statusCode, details, code);

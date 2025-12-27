@@ -9,7 +9,7 @@
  * Log metadata object
  */
 interface LogMetadata {
-  [key: string]: any;
+  [key: string]: unknown;
 }
 
 /**

@@ -9,6 +9,18 @@ import { DatabaseError } from '../middleware/errorHandler';
 import logger from '../utils/logger';
 
 /**
+ * Database parameter type
+ */
+type DatabaseParam = string | number | boolean | null | undefined;
+
+/**
+ * Count result type
+ */
+interface CountResult {
+  count: number;
+}
+
+/**
  * Base repository class with common CRUD operations
  * @template T - The entity type
  */
@@ -27,11 +39,12 @@ export abstract class BaseRepository<T> {
   async findById(id: number): Promise<T | undefined> {
     try {
       const query = `SELECT * FROM ${this.tableName} WHERE id = ?`;
-      const result = await getAsync(query, [id]);
-      return result as T | undefined;
-    } catch (error: any) {
-      logger.error(`Error finding ${this.tableName} by ID`, { id, error: error.message });
-      throw new DatabaseError(`Failed to find ${this.tableName}`, error.message);
+      const result = await getAsync<T>(query, [id]);
+      return result;
+    } catch (error: unknown) {
+      const err = error as Error;
+      logger.error(`Error finding ${this.tableName} by ID`, { id, error: err.message });
+      throw new DatabaseError(`Failed to find ${this.tableName}`, err.message);
     }
   }
 
@@ -41,18 +54,19 @@ export abstract class BaseRepository<T> {
    * @param params - Query parameters
    * @returns Promise resolving to array of records
    */
-  async findAll(conditions?: string, params?: any[]): Promise<T[]> {
+  async findAll(conditions?: string, params?: DatabaseParam[]): Promise<T[]> {
     try {
       let query = `SELECT * FROM ${this.tableName}`;
       if (conditions) {
         query += ` WHERE ${conditions}`;
       }
       
-      const results = await allAsync(query, params || []);
-      return results as T[];
-    } catch (error: any) {
-      logger.error(`Error finding all ${this.tableName}`, { error: error.message });
-      throw new DatabaseError(`Failed to fetch ${this.tableName} records`, error.message);
+      const results = await allAsync<T>(query, params || []);
+      return results;
+    } catch (error: unknown) {
+      const err = error as Error;
+      logger.error(`Error finding all ${this.tableName}`, { error: err.message });
+      throw new DatabaseError(`Failed to fetch ${this.tableName} records`, err.message);
     }
   }
 
@@ -62,14 +76,15 @@ export abstract class BaseRepository<T> {
    * @param params - Query parameters
    * @returns Promise resolving to the record or undefined
    */
-  async findOne(conditions: string, params: any[]): Promise<T | undefined> {
+  async findOne(conditions: string, params: DatabaseParam[]): Promise<T | undefined> {
     try {
       const query = `SELECT * FROM ${this.tableName} WHERE ${conditions} LIMIT 1`;
-      const result = await getAsync(query, params);
-      return result as T | undefined;
-    } catch (error: any) {
-      logger.error(`Error finding one ${this.tableName}`, { error: error.message });
-      throw new DatabaseError(`Failed to find ${this.tableName}`, error.message);
+      const result = await getAsync<T>(query, params);
+      return result;
+    } catch (error: unknown) {
+      const err = error as Error;
+      logger.error(`Error finding one ${this.tableName}`, { error: err.message });
+      throw new DatabaseError(`Failed to find ${this.tableName}`, err.message);
     }
   }
 
@@ -81,7 +96,7 @@ export abstract class BaseRepository<T> {
   async create(data: Partial<T>): Promise<number> {
     try {
       const keys = Object.keys(data);
-      const values = Object.values(data);
+      const values = Object.values(data) as DatabaseParam[];
       const placeholders = keys.map(() => '?').join(', ');
       
       const query = `
@@ -91,9 +106,10 @@ export abstract class BaseRepository<T> {
       
       const result = await runAsync(query, values);
       return result.lastID;
-    } catch (error: any) {
-      logger.error(`Error creating ${this.tableName}`, { error: error.message });
-      throw new DatabaseError(`Failed to create ${this.tableName}`, error.message);
+    } catch (error: unknown) {
+      const err = error as Error;
+      logger.error(`Error creating ${this.tableName}`, { error: err.message });
+      throw new DatabaseError(`Failed to create ${this.tableName}`, err.message);
     }
   }
 
@@ -106,7 +122,7 @@ export abstract class BaseRepository<T> {
   async update(id: number, data: Partial<T>): Promise<number> {
     try {
       const keys = Object.keys(data);
-      const values = Object.values(data);
+      const values = Object.values(data) as DatabaseParam[];
       const setClause = keys.map(key => `${key} = ?`).join(', ');
       
       const query = `
@@ -117,9 +133,10 @@ export abstract class BaseRepository<T> {
       
       const result = await runAsync(query, [...values, id]);
       return result.changes;
-    } catch (error: any) {
-      logger.error(`Error updating ${this.tableName}`, { id, error: error.message });
-      throw new DatabaseError(`Failed to update ${this.tableName}`, error.message);
+    } catch (error: unknown) {
+      const err = error as Error;
+      logger.error(`Error updating ${this.tableName}`, { id, error: err.message });
+      throw new DatabaseError(`Failed to update ${this.tableName}`, err.message);
     }
   }
 
@@ -133,9 +150,10 @@ export abstract class BaseRepository<T> {
       const query = `DELETE FROM ${this.tableName} WHERE id = ?`;
       const result = await runAsync(query, [id]);
       return result.changes;
-    } catch (error: any) {
-      logger.error(`Error deleting ${this.tableName}`, { id, error: error.message });
-      throw new DatabaseError(`Failed to delete ${this.tableName}`, error.message);
+    } catch (error: unknown) {
+      const err = error as Error;
+      logger.error(`Error deleting ${this.tableName}`, { id, error: err.message });
+      throw new DatabaseError(`Failed to delete ${this.tableName}`, err.message);
     }
   }
 
@@ -145,18 +163,19 @@ export abstract class BaseRepository<T> {
    * @param params - Query parameters
    * @returns Promise resolving to count
    */
-  async count(conditions?: string, params?: any[]): Promise<number> {
+  async count(conditions?: string, params?: DatabaseParam[]): Promise<number> {
     try {
       let query = `SELECT COUNT(*) as count FROM ${this.tableName}`;
       if (conditions) {
         query += ` WHERE ${conditions}`;
       }
       
-      const result = await getAsync(query, params || []);
+      const result = await getAsync<CountResult>(query, params || []);
       return result?.count || 0;
-    } catch (error: any) {
-      logger.error(`Error counting ${this.tableName}`, { error: error.message });
-      throw new DatabaseError(`Failed to count ${this.tableName} records`, error.message);
+    } catch (error: unknown) {
+      const err = error as Error;
+      logger.error(`Error counting ${this.tableName}`, { error: err.message });
+      throw new DatabaseError(`Failed to count ${this.tableName} records`, err.message);
     }
   }
 
@@ -169,9 +188,10 @@ export abstract class BaseRepository<T> {
     try {
       const count = await this.count('id = ?', [id]);
       return count > 0;
-    } catch (error: any) {
-      logger.error(`Error checking if ${this.tableName} exists`, { id, error: error.message });
-      throw new DatabaseError(`Failed to check ${this.tableName} existence`, error.message);
+    } catch (error: unknown) {
+      const err = error as Error;
+      logger.error(`Error checking if ${this.tableName} exists`, { id, error: err.message });
+      throw new DatabaseError(`Failed to check ${this.tableName} existence`, err.message);
     }
   }
 
@@ -181,12 +201,13 @@ export abstract class BaseRepository<T> {
    * @param params - Query parameters
    * @returns Promise resolving to query results
    */
-  protected async executeQuery(query: string, params: any[] = []): Promise<any[]> {
+  protected async executeQuery<R = Record<string, unknown>>(query: string, params: DatabaseParam[] = []): Promise<R[]> {
     try {
-      return await allAsync(query, params);
-    } catch (error: any) {
-      logger.error('Error executing custom query', { error: error.message });
-      throw new DatabaseError('Failed to execute query', error.message);
+      return await allAsync<R>(query, params);
+    } catch (error: unknown) {
+      const err = error as Error;
+      logger.error('Error executing custom query', { error: err.message });
+      throw new DatabaseError('Failed to execute query', err.message);
     }
   }
 
@@ -196,12 +217,13 @@ export abstract class BaseRepository<T> {
    * @param params - Query parameters
    * @returns Promise resolving to single row or undefined
    */
-  protected async executeQueryOne(query: string, params: any[] = []): Promise<any | undefined> {
+  protected async executeQueryOne<R = Record<string, unknown>>(query: string, params: DatabaseParam[] = []): Promise<R | undefined> {
     try {
-      return await getAsync(query, params);
-    } catch (error: any) {
-      logger.error('Error executing custom query', { error: error.message });
-      throw new DatabaseError('Failed to execute query', error.message);
+      return await getAsync<R>(query, params);
+    } catch (error: unknown) {
+      const err = error as Error;
+      logger.error('Error executing custom query', { error: err.message });
+      throw new DatabaseError('Failed to execute query', err.message);
     }
   }
 }

@@ -27,13 +27,15 @@ const MARKDOWN_FIELDS = ['description', 'content', 'body', 'notes'];
  */
 const SKIP_FIELDS = ['id', 'token', 'api_key', 'password', 'password_hash', 'secret'];
 
+type SanitizableValue = string | number | boolean | null | undefined | SanitizableValue[] | Record<string, SanitizableValue>;
+
 /**
  * Recursively sanitize an object
  * @param obj - Object to sanitize
  * @param depth - Current nesting depth
  * @returns Sanitized object
  */
-function sanitizeObject(obj: any, depth: number = 0): any {
+function sanitizeObject(obj: unknown, depth: number = 0): SanitizableValue {
   if (depth > MAX_NESTING_DEPTH) {
     throw new Error('Maximum nesting depth exceeded');
   }
@@ -55,12 +57,12 @@ function sanitizeObject(obj: any, depth: number = 0): any {
   }
 
   if (typeof obj === 'object') {
-    const sanitized: any = {};
+    const sanitized: Record<string, SanitizableValue> = {};
     
-    for (const [key, value] of Object.entries(obj)) {
+    for (const [key, value] of Object.entries(obj as Record<string, unknown>)) {
       // Skip certain fields
       if (SKIP_FIELDS.includes(key.toLowerCase())) {
-        sanitized[key] = value;
+        sanitized[key] = value as SanitizableValue;
         continue;
       }
 
@@ -79,14 +81,14 @@ function sanitizeObject(obj: any, depth: number = 0): any {
       } else if (typeof value === 'object' && value !== null) {
         sanitized[sanitizedKey] = sanitizeObject(value, depth + 1);
       } else {
-        sanitized[sanitizedKey] = value;
+        sanitized[sanitizedKey] = value as SanitizableValue;
       }
     }
 
     return sanitized;
   }
 
-  return obj;
+  return obj as SanitizableValue;
 }
 
 /**
@@ -102,20 +104,21 @@ export const sanitizeRequest = (req: Request, res: Response, next: NextFunction)
 
     // Sanitize query parameters
     if (req.query && typeof req.query === 'object') {
-      req.query = sanitizeObject(req.query);
+      req.query = sanitizeObject(req.query) as typeof req.query;
     }
 
     // Sanitize URL parameters
     if (req.params && typeof req.params === 'object') {
-      req.params = sanitizeObject(req.params);
+      req.params = sanitizeObject(req.params) as typeof req.params;
     }
 
     next();
-  } catch (error: any) {
+  } catch (error: unknown) {
+    const err = error as Error;
     // If sanitization fails, reject the request
     return res.status(400).json({
       error: 'Invalid request data',
-      message: error.message,
+      message: err.message,
       statusCode: 400
     });
   }
@@ -131,10 +134,11 @@ export const sanitizeBody = (req: Request, res: Response, next: NextFunction): R
       req.body = sanitizeObject(req.body);
     }
     next();
-  } catch (error: any) {
+  } catch (error: unknown) {
+    const err = error as Error;
     return res.status(400).json({
       error: 'Invalid request body',
-      message: error.message,
+      message: err.message,
       statusCode: 400
     });
   }
@@ -152,19 +156,19 @@ export const createSanitizer = (
 ) => {
   return (req: Request, res: Response, next: NextFunction): Response | void => {
     try {
-      const customSanitize = (obj: any, depth: number = 0): any => {
+      const customSanitize = (obj: unknown, depth: number = 0): SanitizableValue => {
         if (depth > MAX_NESTING_DEPTH || !obj || typeof obj !== 'object') {
-          return obj;
+          return obj as SanitizableValue;
         }
 
         if (Array.isArray(obj)) {
           return obj.map(item => customSanitize(item, depth + 1));
         }
 
-        const result: any = {};
-        for (const [key, value] of Object.entries(obj)) {
+        const result: Record<string, SanitizableValue> = {};
+        for (const [key, value] of Object.entries(obj as Record<string, unknown>)) {
           if (SKIP_FIELDS.includes(key.toLowerCase())) {
-            result[key] = value;
+            result[key] = value as SanitizableValue;
           } else if (typeof value === 'string') {
             if (htmlFields.includes(key.toLowerCase())) {
               result[key] = sanitizeHTML(value);
@@ -176,21 +180,22 @@ export const createSanitizer = (
           } else if (typeof value === 'object' && value !== null) {
             result[key] = customSanitize(value, depth + 1);
           } else {
-            result[key] = value;
+            result[key] = value as SanitizableValue;
           }
         }
         return result;
       };
 
       if (req.body) req.body = customSanitize(req.body);
-      if (req.query) req.query = customSanitize(req.query);
-      if (req.params) req.params = customSanitize(req.params);
+      if (req.query) req.query = customSanitize(req.query) as typeof req.query;
+      if (req.params) req.params = customSanitize(req.params) as typeof req.params;
 
       next();
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const err = error as Error;
       return res.status(400).json({
         error: 'Invalid request data',
-        message: error.message,
+        message: err.message,
         statusCode: 400
       });
     }

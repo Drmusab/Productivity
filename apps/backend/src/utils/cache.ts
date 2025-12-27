@@ -4,8 +4,8 @@
  * @module utils/cache
  */
 
-interface CacheItem {
-  value: any;
+interface CacheItem<T> {
+  value: T;
   expiresAt: number;
 }
 
@@ -13,7 +13,7 @@ interface CacheItem {
  * Simple in-memory cache with TTL support
  */
 class Cache {
-  private store: Map<string, CacheItem>;
+  private store: Map<string, CacheItem<unknown>>;
   private timers: Map<string, NodeJS.Timeout>;
   private defaultTTL: number;
 
@@ -26,7 +26,7 @@ class Cache {
   /**
    * Store a value in cache with optional TTL
    */
-  set(key: string, value: any, ttl: number | null = null): void {
+  set<T>(key: string, value: T, ttl: number | null = null): void {
     const timeToLive = ttl !== null ? ttl : this.defaultTTL;
     // Clear existing timer if any
     if (this.timers.has(key)) {
@@ -50,7 +50,7 @@ class Cache {
   /**
    * Retrieve a value from cache
    */
-  get(key: string): any {
+  get<T = unknown>(key: string): T | null {
     const item = this.store.get(key);
     
     if (!item) {
@@ -63,7 +63,7 @@ class Cache {
       return null;
     }
 
-    return item.value;
+    return item.value as T;
   }
 
   /**
@@ -115,8 +115,8 @@ class Cache {
    * @param {number} ttl - Time to live in milliseconds (uses default if not specified)
    * @returns {Promise<*>} Cached or generated value
    */
-  async getOrSet(key, factory, ttl = null) {
-    const cached = this.get(key);
+  async getOrSet<T>(key: string, factory: () => Promise<T>, ttl: number | null = null): Promise<T> {
+    const cached = this.get<T>(key);
     
     if (cached !== null) {
       return cached;

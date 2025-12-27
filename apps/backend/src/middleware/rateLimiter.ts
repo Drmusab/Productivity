@@ -5,7 +5,8 @@
  */
 
 import rateLimit, { RateLimitRequestHandler } from 'express-rate-limit';
-import { Request, Response } from 'express';
+import { Request, Response, NextFunction } from 'express';
+import { AuthenticatedRequest } from '../types';
 
 /**
  * Rate limit configuration interface
@@ -116,7 +117,7 @@ export function createRateLimiter(config: RateLimitConfig): RateLimitRequestHand
     // Key generator: use IP + user ID if authenticated
     keyGenerator: (req: Request): string => {
       const ip = req.ip || req.socket.remoteAddress || 'unknown';
-      const userId = (req as any).user?.id;
+      const userId = (req as AuthenticatedRequest).user?.id;
       return userId ? `${ip}:${userId}` : ip;
     },
     // Skip rate limiting for trusted IPs in development
@@ -157,12 +158,12 @@ export const rateLimiters = {
 export function createDynamicRateLimiter(
   authenticatedConfig: RateLimitConfig,
   anonymousConfig: RateLimitConfig
-): (req: Request, res: Response, next: any) => void {
+): (req: Request, res: Response, next: NextFunction) => void {
   const authenticatedLimiter = createRateLimiter(authenticatedConfig);
   const anonymousLimiter = createRateLimiter(anonymousConfig);
 
-  return (req: Request, res: Response, next: any): void => {
-    const isAuthenticated = !!(req as any).user;
+  return (req: Request, res: Response, next: NextFunction): void => {
+    const isAuthenticated = !!(req as AuthenticatedRequest).user;
     const limiter = isAuthenticated ? authenticatedLimiter : anonymousLimiter;
     limiter(req, res, next);
   };

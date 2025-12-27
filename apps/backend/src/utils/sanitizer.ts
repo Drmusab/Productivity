@@ -9,12 +9,12 @@
  * @param {string} input - User input containing potential HTML
  * @returns {string} Sanitized string
  */
-function sanitizeHTML(input) {
+function sanitizeHTML(input: unknown): string {
   if (!input || typeof input !== 'string') {
     return '';
   }
 
-  const htmlEntities = {
+  const htmlEntities: Record<string, string> = {
     '<': '&lt;',
     '>': '&gt;',
     '"': '&quot;',
@@ -32,7 +32,7 @@ function sanitizeHTML(input) {
  * @param {string} input - User input
  * @returns {string} Sanitized string
  */
-function sanitizeSQL(input) {
+function sanitizeSQL(input: unknown): string {
   if (!input || typeof input !== 'string') {
     return '';
   }
@@ -47,7 +47,7 @@ function sanitizeSQL(input) {
  * @param {string} email - Email address to validate
  * @returns {string|null} Sanitized email or null if invalid
  */
-function sanitizeEmail(email) {
+function sanitizeEmail(email: unknown): string | null {
   if (!email || typeof email !== 'string') {
     return null;
   }
@@ -63,7 +63,7 @@ function sanitizeEmail(email) {
  * @param {string} url - URL to sanitize
  * @returns {string|null} Sanitized URL or null if invalid
  */
-function sanitizeURL(url) {
+function sanitizeURL(url: unknown): string | null {
   if (!url || typeof url !== 'string') {
     return null;
   }
@@ -90,7 +90,7 @@ function sanitizeURL(url) {
  * @param {string} filename - File name to sanitize
  * @returns {string} Sanitized file name
  */
-function sanitizeFilename(filename) {
+function sanitizeFilename(filename: unknown): string {
   if (!filename || typeof filename !== 'string') {
     return 'unnamed_file';
   }
@@ -117,7 +117,7 @@ function sanitizeFilename(filename) {
  * @param {string} markdown - Markdown content
  * @returns {string} Sanitized markdown
  */
-function sanitizeMarkdown(markdown) {
+function sanitizeMarkdown(markdown: unknown): string {
   if (!markdown || typeof markdown !== 'string') {
     return '';
   }
@@ -153,13 +153,15 @@ function sanitizeMarkdown(markdown) {
   return sanitized;
 }
 
+type SanitizedValue = string | number | boolean | null | SanitizedValue[] | { [key: string]: SanitizedValue };
+
 /**
  * Sanitize JSON input
  * @param {*} input - Input to sanitize
  * @param {number} maxDepth - Maximum depth of nested objects (default: 10)
  * @returns {*} Sanitized object
  */
-function sanitizeJSON(input, maxDepth = 10) {
+function sanitizeJSON(input: unknown, maxDepth = 10): SanitizedValue {
   if (maxDepth === 0) {
     return null;
   }
@@ -181,7 +183,7 @@ function sanitizeJSON(input, maxDepth = 10) {
   }
 
   if (typeof input === 'object') {
-    const sanitized = {};
+    const sanitized: { [key: string]: SanitizedValue } = {};
     for (const [key, value] of Object.entries(input)) {
       const sanitizedKey = sanitizeHTML(key);
       sanitized[sanitizedKey] = sanitizeJSON(value, maxDepth - 1);
@@ -192,13 +194,19 @@ function sanitizeJSON(input, maxDepth = 10) {
   return null;
 }
 
+interface NumberSanitizeOptions {
+  min?: number;
+  max?: number;
+  integer?: boolean;
+}
+
 /**
  * Validate and sanitize numeric input
  * @param {*} input - Input to validate
  * @param {Object} options - Validation options {min, max, integer}
  * @returns {number|null} Sanitized number or null if invalid
  */
-function sanitizeNumber(input, options: any = {}) {
+function sanitizeNumber(input: unknown, options: NumberSanitizeOptions = {}): number | null {
   const num = Number(input);
   
   if (isNaN(num) || !isFinite(num)) {
@@ -225,7 +233,7 @@ function sanitizeNumber(input, options: any = {}) {
  * @param {string} input - Input string
  * @returns {string} String without null bytes
  */
-function removeNullBytes(input) {
+function removeNullBytes(input: unknown): string {
   if (!input || typeof input !== 'string') {
     return '';
   }

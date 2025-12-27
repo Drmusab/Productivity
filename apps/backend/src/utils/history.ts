@@ -22,7 +22,13 @@ import {  db  } from './database';
  * recordTaskHistory(123, 'updated', '{"status": "todo"}', '{"status": "done"}', 1);
  * recordTaskHistory(456, 'created', null, null, 2);
  */
-const recordTaskHistory = (taskId, action, oldValue, newValue, userId) => {
+const recordTaskHistory = (
+  taskId: number,
+  action: string,
+  oldValue: string | null,
+  newValue: string | null,
+  userId: number | null
+): void => {
   db.run(
     'INSERT INTO task_history (task_id, action, old_value, new_value, user_id) VALUES (?, ?, ?, ?, ?)',
     [taskId, action, oldValue, newValue, userId],

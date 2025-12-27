@@ -5,6 +5,7 @@
  */
 
 import crypto from 'crypto';
+import { Request, Response, NextFunction } from 'express';
 
 /**
  * Middleware enforcing API key authentication for automation/webhook endpoints.
@@ -24,7 +25,7 @@ import crypto from 'crypto';
  * @example
  * app.use('/api/webhooks', apiKeyAuth, webhookRoutes);
  */
-export = function apiKeyAuth(req, res, next) {
+export = function apiKeyAuth(req: Request, res: Response, next: NextFunction): void | Response {
   const expected = process.env.N8N_API_KEY;
 
   // Skip authentication if API key is not configured (development mode)
@@ -60,10 +61,11 @@ export = function apiKeyAuth(req, res, next) {
  * @example
  * const apiKey = extractApiKey(req); // Returns 'my-secret-key' or null
  */
-function extractApiKey(req) {
+function extractApiKey(req: Request): string | null {
   // Check x-api-key header
-  if (req.headers['x-api-key']) {
-    return req.headers['x-api-key'];
+  const apiKeyHeader = req.headers['x-api-key'];
+  if (apiKeyHeader) {
+    return Array.isArray(apiKeyHeader) ? apiKeyHeader[0] : apiKeyHeader;
   }
 
   // Check Authorization: Bearer <token> header
@@ -76,7 +78,7 @@ function extractApiKey(req) {
 
   // Check query parameter
   if (req.query.api_key) {
-    return req.query.api_key;
+    return Array.isArray(req.query.api_key) ? String(req.query.api_key[0]) : String(req.query.api_key);
   }
 
   return null;
@@ -95,7 +97,7 @@ function extractApiKey(req) {
  * safeCompare('secret123', 'secret123'); // Returns true
  * safeCompare('secret123', 'wrong'); // Returns false
  */
-function safeCompare(a, b) {
+function safeCompare(a: string, b: string): boolean {
   const aBuffer = Buffer.from(a);
   const bBuffer = Buffer.from(b);
 
