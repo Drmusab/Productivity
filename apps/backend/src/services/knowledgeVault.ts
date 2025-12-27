@@ -117,6 +117,7 @@ interface ThoughtRow {
   content: string;
   category: string | null;
   session_id: number | null;
+  is_processed: number | null;
   created_by: number;
   created_at: string;
 }
@@ -509,7 +510,7 @@ export class KnowledgeVaultService {
       for (const thought of thoughts) {
         try {
           const contentPreview = thought.content
-            ? thought.content.substring(0, 100) 
+            ? thought.content.substring(0, 100)
             : 'Untitled Thought';
 
           await this.createVaultItem({
@@ -517,7 +518,7 @@ export class KnowledgeVaultService {
             title: contentPreview,
             content: thought.content || '',
             para_category: thought.category === 'actions' ? PARACategory.PROJECT : PARACategory.RESOURCE,
-            tags: [thought.category],
+            tags: thought.category ? [thought.category] : [],
             metadata: {
               original_category: thought.category,
               is_processed: thought.is_processed,
