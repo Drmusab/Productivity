@@ -8,7 +8,6 @@ import path from 'path';
 import dotenv from 'dotenv';
 import { createServer } from 'http';
 
-
 dotenv.config();
 
 // Import configuration
@@ -48,7 +47,6 @@ import {  requestTimer  } from './middleware/performance';
 import logger from './utils/logger';
 import { initializeBlockSystem } from './services/blockSystem';
 import { CollaborationServer } from './services/collaborationServer';
-
 import { sanitizeRequest } from './middleware/sanitization';
 import { rateLimiters } from './middleware/rateLimiter';
 import { runStartupMigrations } from './services/versioning';
@@ -121,8 +119,6 @@ if (process.env.NODE_ENV !== 'test') {
   app.use(requestTimer);
 }
 
-
-
 // General API rate limiting - 100 requests per 15 minutes per IP
 app.use('/api/', rateLimiters.general);
 
@@ -158,8 +154,6 @@ app.use(mongoSanitize({
 
 // Request sanitization middleware - protects against XSS
 app.use(sanitizeRequest);
-
-
 
 // Static files middleware - serves uploaded attachments
 app.use('/attachments', express.static(path.join(__dirname, '../attachments')));
@@ -246,7 +240,6 @@ if (process.env.NODE_ENV !== 'test') {
       logger.info(`Server running on port ${PORT}`);
       logger.info(`Environment: ${config.NODE_ENV}`);
       logger.info(`Cache enabled: ${config.ENABLE_CACHE}`);
-
       logger.info(`Collaboration server ready for WebSocket connections`);
       startScheduler();
     });
