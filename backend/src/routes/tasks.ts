@@ -282,6 +282,68 @@ router.get('/search/advanced', async (req, res) => {
   }
 });
 
+// Export a task as Obsidian-friendly Markdown with YAML frontmatter
+router.get('/:id/markdown', [
+  param('id').isInt({ min: 1 }).withMessage('Task ID must be a positive integer'),
+], (req, res) => {
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    return res.status(400).json({ errors: errors.array() });
+  }
+
+  const { id } = req.params;
+  const taskId = parseInt(id, 10);
+
+  db.get(
+    `SELECT t.*, c.name as column_name, s.name as swimlane_name,
+            u1.username as created_by_name, u2.username as assigned_to_name
+     FROM tasks t
+     JOIN columns c ON t.column_id = c.id
+     LEFT JOIN swimlanes s ON t.swimlane_id = s.id
+     LEFT JOIN users u1 ON t.created_by = u1.id
+     LEFT JOIN users u2 ON t.assigned_to = u2.id
+     WHERE t.id = ?`,
+    [taskId],
+    (err, row) => {
+      if (err) {
+        return res.status(500).json({ error: err.message });
+      }
+
+      if (!row) {
+        return res.status(404).json({ error: 'Task not found' });
+      }
+
+      db.all(
+        'SELECT tg.name FROM tags tg JOIN task_tags tt ON tg.id = tt.tag_id WHERE tt.task_id = ?',
+        [taskId],
+        (tagErr, tagRows = []) => {
+          if (tagErr) {
+            return res.status(500).json({ error: tagErr.message });
+          }
+
+          const frontmatter = {
+            id: row.id,
+            status: row.column_name,
+            priority: row.priority,
+            due: row.due_date,
+            column_id: row.column_id,
+            swimlane: row.swimlane_name,
+            created_at: row.created_at,
+            updated_at: row.updated_at,
+            created_by: row.created_by_name,
+            assigned_to: row.assigned_to_name,
+            tags: tagRows.map(tag => tag.name).filter(Boolean),
+          };
+
+          const markdown = buildTaskMarkdown(frontmatter, row.title, row.description);
+
+          res.type('text/markdown').send(markdown);
+        }
+      );
+    }
+  );
+});
+
 // Get a specific task
 router.get('/:id', [
   param('id').isInt({ min: 1 }).withMessage('Task ID must be a positive integer'),
@@ -1293,4 +1355,53 @@ function handleTaskError(res, error) {
 
   const message = error.message || error.toString();
   return res.status(500).json({ error: message });
+}
+
+function buildTaskMarkdown(frontmatter, title, description) {
+  const yaml = serializeFrontmatter(frontmatter);
+  const content = description?.trim() || '_No description provided._';
+
+  return `---\n${yaml}\n---\n\n# ${title}\n\n${content}`;
+}
+
+function serializeFrontmatter(frontmatter) {
+  const lines = [];
+
+  Object.entries(frontmatter).forEach(([key, value]) => {
+    if (value === undefined || value === null) {
+      return;
+    }
+
+    if (Array.isArray(value)) {
+      if (value.length === 0) {
+        return;
+      }
+      lines.push(`${key}:`);
+      value.forEach(item => lines.push(`  - ${escapeYamlValue(item)}`));
+      return;
+    }
+
+    lines.push(`${key}: ${escapeYamlValue(value)}`);
+  });
+
+  return lines.join('\n');
+}
+
+function escapeYamlValue(value) {
+  if (value === null || value === undefined) {
+    return '';
+  }
+
+  if (typeof value === 'string') {
+    if (/[:"\n]/.test(value) || /^\s|\s$/.test(value)) {
+      return `"${value.replace(/"/g, '\\\"')}"`;
+    }
+    return value;
+  }
+
+  if (value instanceof Date) {
+    return value.toISOString();
+  }
+
+  return String(value);
 }
