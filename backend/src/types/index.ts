@@ -297,3 +297,6 @@ export interface AuthenticatedRequest extends Request {
     role?: string;
   };
 }
+
+// Re-export AI types
+export * from './ai';

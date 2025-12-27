@@ -45,6 +45,7 @@ import obsidianNotesRoutes from './routes/obsidianNotes';
 import ideasRoutes from './routes/ideas';
 import writingRoutes from './routes/writing';
 import utilitiesRoutes from './routes/utilities';
+import aiNotesRoutes from './routes/aiNotes';
 import {  startScheduler  } from './services/scheduler';
 import {  requestTimer  } from './middleware/performance';
 import logger from './utils/logger';
@@ -156,6 +157,7 @@ app.use('/api/obsidian-notes', obsidianNotesRoutes);
 app.use('/api/ideas', ideasRoutes);
 app.use('/api/writing', writingRoutes);
 app.use('/api/utilities', utilitiesRoutes);
+app.use('/api/ai-notes', aiNotesRoutes);
 
 import {  errorHandler  } from './middleware/errorHandler';
 
