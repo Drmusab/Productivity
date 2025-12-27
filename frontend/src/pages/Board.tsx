@@ -49,6 +49,9 @@ import {
   reorderTasksAfterMove
 } from '../utils/boardUtils';
 
+// Default user ID for system operations when user is not authenticated
+const DEFAULT_USER_ID = 1;
+
 const Board = () => {
   const { id } = useParams();
   const { showSuccess, showError } = useNotification();
@@ -388,7 +391,7 @@ const Board = () => {
 
   const handleDeleteTask = async (taskId) => {
     try {
-      const deletedBy = user?.id || 1; // Use authenticated user ID or fallback to 1
+      const deletedBy = user?.id || DEFAULT_USER_ID;
       await deleteTask(taskId, deletedBy);
       showSuccess('تم حذف المهمة بنجاح');
       
