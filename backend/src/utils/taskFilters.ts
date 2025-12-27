@@ -6,12 +6,42 @@
 
 import {  allAsync  } from './database';
 
+interface TaskSearchFilters {
+  search?: string;
+  board_id?: number;
+  column_id?: number;
+  swimlane_id?: number | null;
+  priority?: string | string[];
+  assigned_to?: number | null;
+  created_by?: number;
+  due_date_from?: string;
+  due_date_to?: string;
+  overdue?: boolean | string;
+  due_today?: boolean | string;
+  due_this_week?: boolean | string;
+  gtd_status?: string | string[];
+  execution_status?: string | string[];
+  urgent?: boolean;
+  important?: boolean;
+  pinned?: boolean;
+  project_id?: number | null;
+  category?: string;
+  tags?: number[];
+  tags_all?: number[];
+  sort?: {
+    by?: string;
+    direction?: string;
+  };
+  limit?: number;
+  offset?: number;
+}
+
 /**
  * Build SQL WHERE clause from filter options
  * @param {Object} filters - Filter options
  * @returns {Object} Object with SQL where clause and parameters
  */
-function buildWhereClause(filters) {
+function buildWhereClause(filters: TaskSearchFilters) {
   const conditions = [];
   const params = [];
 
@@ -190,7 +220,7 @@ function buildWhereClause(filters) {
  * @param {Object} sort - Sort options
  * @returns {string} SQL ORDER BY clause
  */
-function buildOrderByClause(sort: any = {}) {
+function buildOrderByClause(sort: TaskSearchFilters['sort'] = {}) {
   const validColumns = [
     'title', 'created_at', 'updated_at', 'due_date', 
     'priority', 'position', 'execution_status'
@@ -224,18 +254,17 @@ function buildOrderByClause(sort: any = {}) {
  * @param {Object} options - Filter and search options
  * @returns {Promise<Array>} Filtered tasks
  */
-async function searchTasks(options: any = {}) {
+async function searchTasks(options: TaskSearchFilters = {}) {
   const { whereClause, params } = buildWhereClause(options);
   const orderByClause = buildOrderByClause(options.sort);
-  
-  // Pagination
-  const limit = options.limit ? parseInt(options.limit) : null;
-  const offset = options.offset ? parseInt(options.offset) : 0;
-  
+
+  const limit = Number.isInteger(options.limit) ? options.limit : null;
+  const offset = Number.isInteger(options.offset) ? options.offset : 0;
+
   const paginationClause = limit ? `LIMIT ${limit} OFFSET ${offset}` : '';
 
   const sql = `
-    SELECT 
+    SELECT
       t.*,
       u.username as created_by_name,
       au.username as assigned_to_name,
@@ -256,21 +285,49 @@ async function searchTasks(options: any = {}) {
 
   const tasks = await allAsync(sql, params);
 
-  // Load tags and subtasks for each task
-  for (const task of tasks) {
-    task.tags = await allAsync(`
-      SELECT t.id as tag_id, t.name as tag_name, t.color as tag_color
-      FROM tags t
-      INNER JOIN task_tags tt ON t.id = tt.tag_id
-      WHERE tt.task_id = ?
-    `, [task.id]);
-
-    task.subtasks = await allAsync(`
-      SELECT * FROM subtasks WHERE task_id = ? ORDER BY position ASC
-    `, [task.id]);
+  if (!tasks.length) {
+    return tasks;
   }
 
-  return tasks;
+  const taskIds = tasks.map(task => task.id);
+  const placeholders = taskIds.map(() => '?').join(',');
+
+  const tagRows = await allAsync(`
+    SELECT tt.task_id, t.id as tag_id, t.name as tag_name, t.color as tag_color
+    FROM task_tags tt
+    JOIN tags t ON t.id = tt.tag_id
+    WHERE tt.task_id IN (${placeholders})
+  `, taskIds);
+
+  const subtasks = await allAsync(`
+    SELECT * FROM subtasks WHERE task_id IN (${placeholders}) ORDER BY position ASC
+  `, taskIds);
+
+  const tagsByTask = tagRows.reduce((acc: Record<number, any[]>, row) => {
+    if (!acc[row.task_id]) {
+      acc[row.task_id] = [];
+    }
+    acc[row.task_id].push({
+      tag_id: row.tag_id,
+      tag_name: row.tag_name,
+      tag_color: row.tag_color
+    });
+    return acc;
+  }, {});
+
+  const subtasksByTask = subtasks.reduce((acc: Record<number, any[]>, row) => {
+    if (!acc[row.task_id]) {
+      acc[row.task_id] = [];
+    }
+    acc[row.task_id].push(row);
+    return acc;
+  }, {});
+
+  return tasks.map(task => ({
+    ...task,
+    tags: tagsByTask[task.id] || [],
+    subtasks: subtasksByTask[task.id] || []
+  }));
 }
 
 /**
@@ -278,7 +335,7 @@ async function searchTasks(options: any = {}) {
  * @param {Object} filters - Filter options
  * @returns {Promise<number>} Count of matching tasks
  */
-async function countTasks(filters = {}) {
+async function countTasks(filters: TaskSearchFilters = {}) {
   const { whereClause, params } = buildWhereClause(filters);
 
   const sql = `
@@ -295,3 +352,4 @@ export { searchTasks };
 export { countTasks };
 export { buildWhereClause };
 export { buildOrderByClause };
+export type { TaskSearchFilters };

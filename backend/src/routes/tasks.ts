@@ -238,33 +238,55 @@ router.get('/', listTasksValidations, (req, res) => {
  * Advanced task search endpoint with filtering, sorting, and pagination
  * @route GET /api/tasks/search/advanced
  */
-router.get('/search/advanced', async (req, res) => {
+router.get('/search/advanced', [
+  query('board_id').optional().isInt({ min: 1 }).toInt(),
+  query('column_id').optional().isInt({ min: 1 }).toInt(),
+  query('assigned_to').optional().isInt({ min: 1 }).toInt(),
+  query('overdue').optional().isBoolean().toBoolean(),
+  query('due_today').optional().isBoolean().toBoolean(),
+  query('due_this_week').optional().isBoolean().toBoolean(),
+  query('limit').optional().isInt({ min: 1, max: 100 }).toInt(),
+  query('offset').optional().isInt({ min: 0 }).toInt(),
+  query('priority').optional().isString(),
+  query('tags').optional().isString(),
+  query('sort_by').optional().isIn(['title', 'created_at', 'updated_at', 'due_date', 'priority', 'position', 'execution_status']),
+  query('sort_direction').optional().isIn(['ASC', 'DESC', 'asc', 'desc'])
+], async (req, res) => {
   try {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ errors: errors.array() });
+    }
+
+    const parsedLimit = req.query.limit ? Number(req.query.limit) : 50;
+    const parsedOffset = req.query.offset ? Number(req.query.offset) : 0;
+
     const filters = {
-      search: req.query.search,
-      board_id: req.query.board_id ? parseInt(req.query.board_id) : undefined,
-      column_id: req.query.column_id ? parseInt(req.query.column_id) : undefined,
-      assigned_to: req.query.assigned_to ? parseInt(req.query.assigned_to) : undefined,
+      search: req.query.search as string,
+      board_id: req.query.board_id !== undefined ? Number(req.query.board_id) : undefined,
+      column_id: req.query.column_id !== undefined ? Number(req.query.column_id) : undefined,
+      assigned_to: req.query.assigned_to !== undefined ? Number(req.query.assigned_to) : undefined,
       overdue: req.query.overdue,
       due_today: req.query.due_today,
       due_this_week: req.query.due_this_week,
-      limit: req.query.limit ? parseInt(req.query.limit) : 50,
-      offset: req.query.offset ? parseInt(req.query.offset) : 0
+      limit: parsedLimit,
+      offset: parsedOffset
     };
 
-    if (req.query.priority) {
-      filters.priority = req.query.priority.includes(',') 
-        ? req.query.priority.split(',') 
+    if (typeof req.query.priority === 'string') {
+      filters.priority = req.query.priority.includes(',')
+        ? req.query.priority.split(',')
         : req.query.priority;
     }
 
-    if (req.query.tags) {
-      filters.tags = req.query.tags.split(',').map(id => parseInt(id));
+    if (typeof req.query.tags === 'string' && req.query.tags.trim().length > 0) {
+      const tagIds = req.query.tags.split(',').map(id => Number(id)).filter(id => Number.isInteger(id) && id > 0);
+      filters.tags = tagIds;
     }
 
     filters.sort = {
-      by: req.query.sort_by || 'position',
-      direction: req.query.sort_direction || 'ASC'
+      by: typeof req.query.sort_by === 'string' ? req.query.sort_by : 'position',
+      direction: typeof req.query.sort_direction === 'string' ? req.query.sort_direction : 'ASC'
     };
 
     const tasks = await searchTasks(filters);
@@ -278,7 +300,7 @@ router.get('/search/advanced', async (req, res) => {
       has_more: (filters.offset + filters.limit) < total
     });
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    res.status(500).json({ error: (error as Error).message });
   }
 });
 
