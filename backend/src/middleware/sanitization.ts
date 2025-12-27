@@ -93,7 +93,7 @@ function sanitizeObject(obj: any, depth: number = 0): any {
  * Middleware to sanitize request body, query, and params
  * Protects against XSS, SQL injection, and other injection attacks
  */
-export const sanitizeRequest = (req: Request, res: Response, next: NextFunction): void => {
+export const sanitizeRequest = (req: Request, res: Response, next: NextFunction): Response | void => {
   try {
     // Sanitize body
     if (req.body && typeof req.body === 'object') {
@@ -125,7 +125,7 @@ export const sanitizeRequest = (req: Request, res: Response, next: NextFunction)
  * Middleware to sanitize only request body (lighter version)
  * Use for routes where query/params are already validated
  */
-export const sanitizeBody = (req: Request, res: Response, next: NextFunction): void => {
+export const sanitizeBody = (req: Request, res: Response, next: NextFunction): Response | void => {
   try {
     if (req.body && typeof req.body === 'object') {
       req.body = sanitizeObject(req.body);
@@ -150,7 +150,7 @@ export const createSanitizer = (
   htmlFields: string[] = HTML_FIELDS,
   markdownFields: string[] = MARKDOWN_FIELDS
 ) => {
-  return (req: Request, res: Response, next: NextFunction): void => {
+  return (req: Request, res: Response, next: NextFunction): Response | void => {
     try {
       const customSanitize = (obj: any, depth: number = 0): any => {
         if (depth > MAX_NESTING_DEPTH || !obj || typeof obj !== 'object') {

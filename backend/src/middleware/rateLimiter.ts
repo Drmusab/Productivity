@@ -157,7 +157,7 @@ export const rateLimiters = {
 export function createDynamicRateLimiter(
   authenticatedConfig: RateLimitConfig,
   anonymousConfig: RateLimitConfig
-): RateLimitRequestHandler {
+): (req: Request, res: Response, next: any) => void {
   const authenticatedLimiter = createRateLimiter(authenticatedConfig);
   const anonymousLimiter = createRateLimiter(anonymousConfig);
 

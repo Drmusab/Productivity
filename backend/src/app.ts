@@ -1,22 +1,18 @@
-/**
- * @fileoverview Main Express application setup and configuration.
- * Configures middleware, routes, error handling, and initializes the database.
- * Entry point for the backend server.
- * @module app
- */
-
 import express, { Application, Request, Response, NextFunction } from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
-import rateLimit from 'express-rate-limit';
 import compression from 'compression';
 import mongoSanitize from 'express-mongo-sanitize';
 import swaggerUi from 'swagger-ui-express';
 import path from 'path';
 import dotenv from 'dotenv';
 import { createServer } from 'http';
+import cookieParser from 'cookie-parser';
 
 dotenv.config();
+
+// Import configuration
+import { config, env } from './config/env';
 
 import swaggerSpec from './config/swagger';
 
@@ -52,6 +48,10 @@ import {  requestTimer  } from './middleware/performance';
 import logger from './utils/logger';
 import { initializeBlockSystem } from './services/blockSystem';
 import { CollaborationServer } from './services/collaborationServer';
+import { csrfProtection } from './middleware/csrf';
+import { sanitizeRequest } from './middleware/sanitization';
+import { rateLimiters } from './middleware/rateLimiter';
+import { startCacheCleanup } from './utils/cache';
 
 /** Express application instance */
 const app: Application = express();
@@ -59,8 +59,11 @@ const app: Application = express();
 /** HTTP server instance for Socket.IO */
 const httpServer = createServer(app);
 
-/** Server port from environment or default to 3001 */
-const PORT = process.env.PORT || 3001;
+/** Server port from environment configuration */
+const PORT = config.PORT;
+
+// Trust proxy - required for rate limiting and IP detection behind reverse proxies
+app.set('trust proxy', 1);
 
 // Compression middleware - gzip compression for responses
 app.use(compression({
@@ -70,10 +73,11 @@ app.use(compression({
     }
     return compression.filter(req, res);
   },
-  threshold: 1024 // Only compress responses larger than 1KB
+  threshold: 1024, // Only compress responses larger than 1KB
+  level: 6 // Compression level (0-9, higher = better compression but slower)
 }));
 
-// Security middleware - adds various HTTP headers for security
+// Enhanced security middleware - adds various HTTP headers for security
 app.use(helmet({
   contentSecurityPolicy: {
     directives: {
@@ -81,19 +85,35 @@ app.use(helmet({
       styleSrc: ["'self'", "'unsafe-inline'"],
       scriptSrc: ["'self'"],
       imgSrc: ["'self'", "data:", "https:"],
+      connectSrc: ["'self'"],
+      fontSrc: ["'self'"],
+      objectSrc: ["'none'"],
+      mediaSrc: ["'self'"],
+      frameSrc: ["'none'"],
     },
   },
   hsts: {
     maxAge: 31536000,
     includeSubDomains: true,
     preload: true
+  },
+  frameguard: {
+    action: 'deny'
+  },
+  noSniff: true,
+  xssFilter: true,
+  referrerPolicy: {
+    policy: 'strict-origin-when-cross-origin'
   }
 }));
 
 // CORS middleware - allows cross-origin requests from frontend
 app.use(cors({
-  origin: process.env.FRONTEND_URL || 'http://localhost:3000',
-  credentials: true
+  origin: config.FRONTEND_URL,
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-CSRF-Token', 'X-API-Key'],
+  exposedHeaders: ['X-CSRF-Token', 'RateLimit-Limit', 'RateLimit-Remaining', 'RateLimit-Reset']
 }));
 
 // Performance monitoring middleware (disabled in test environment)
@@ -101,22 +121,50 @@ if (process.env.NODE_ENV !== 'test') {
   app.use(requestTimer);
 }
 
-// Rate limiting to prevent abuse - 100 requests per 15 minutes per IP
-const limiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 100, // limit each IP to 100 requests per windowMs
-  message: 'Too many requests from this IP, please try again later.'
-});
-app.use('/api/', limiter);
+// Cookie parser middleware - required for CSRF protection
+app.use(cookieParser());
+
+// General API rate limiting - 100 requests per 15 minutes per IP
+app.use('/api/', rateLimiters.general);
 
 // Body parsing middleware - handles JSON and URL-encoded data
-app.use(express.json({ limit: '10mb' }));
-app.use(express.urlencoded({ extended: true, limit: '10mb' }));
+app.use(express.json({ 
+  limit: '10mb',
+  strict: true, // Only accept arrays and objects
+  reviver: (key, value) => {
+    // Additional security: reject suspicious patterns
+    if (typeof value === 'string' && value.includes('\0')) {
+      throw new Error('Null bytes not allowed in JSON');
+    }
+    return value;
+  }
+}));
+app.use(express.urlencoded({ 
+  extended: true, 
+  limit: '10mb',
+  parameterLimit: 1000 // Prevent DoS via large number of parameters
+}));
 
 // Data sanitization against NoSQL query injection
 app.use(mongoSanitize({
-  replaceWith: '_'
+  replaceWith: '_',
+  onSanitize: ({ req, key }) => {
+    logger.warn('Sanitized potentially malicious input', { 
+      path: req.path, 
+      key,
+      ip: req.ip 
+    });
+  }
 }));
+
+// Request sanitization middleware - protects against XSS
+app.use(sanitizeRequest);
+
+// CSRF protection middleware (applied after body parsing)
+// Disabled in test environment and for specific paths
+if (process.env.NODE_ENV !== 'test') {
+  app.use(csrfProtection);
+}
 
 // Static files middleware - serves uploaded attachments
 app.use('/attachments', express.static(path.join(__dirname, '../attachments')));
@@ -198,9 +246,14 @@ if (process.env.NODE_ENV !== 'test') {
     // Initialize collaboration server
     const collaborationServer = new CollaborationServer(httpServer);
     
+    // Start cache cleanup (every minute)
+    startCacheCleanup(60000);
+    
     httpServer.listen(PORT, () => {
       logger.info(`Server running on port ${PORT}`);
-      logger.info(`Environment: ${process.env.NODE_ENV || 'development'}`);
+      logger.info(`Environment: ${config.NODE_ENV}`);
+      logger.info(`Cache enabled: ${config.ENABLE_CACHE}`);
+      logger.info(`CSRF protection: ${env.isProduction() ? 'enabled' : 'disabled'}`);
       logger.info(`Collaboration server ready for WebSocket connections`);
       startScheduler();
     });
@@ -212,6 +265,33 @@ if (process.env.NODE_ENV !== 'test') {
       httpServer.close(() => {
         logger.info('HTTP server closed');
         process.exit(0);
+      });
+    });
+    
+    process.on('SIGINT', () => {
+      logger.info('SIGINT signal received: closing HTTP server');
+      collaborationServer.shutdown();
+      httpServer.close(() => {
+        logger.info('HTTP server closed gracefully');
+        process.exit(0);
+      });
+    });
+    
+    // Handle uncaught exceptions
+    process.on('uncaughtException', (error) => {
+      logger.error('Uncaught exception occurred', {
+        error: error.message,
+        stack: error.stack
+      });
+      // Give time to flush logs before exiting
+      setTimeout(() => process.exit(1), 1000);
+    });
+    
+    // Handle unhandled promise rejections
+    process.on('unhandledRejection', (reason: any) => {
+      logger.error('Unhandled promise rejection', {
+        reason: reason?.message || reason,
+        stack: reason?.stack
       });
     });
   }).catch(err => {
