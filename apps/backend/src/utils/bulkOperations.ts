@@ -10,13 +10,101 @@ import {  triggerAutomation  } from '../services/automation';
 import {  emitEvent  } from '../services/eventBus';
 
 /**
+ * Result of a bulk update operation
+ */
+interface BulkUpdateResult {
+  updated: number;
+  taskIds?: number[];
+  errors: string[];
+}
+
+/**
+ * Result of a bulk delete operation
+ */
+interface BulkDeleteResult {
+  deleted: number;
+  taskIds?: number[];
+  errors: string[];
+}
+
+/**
+ * Result of a bulk tag operation
+ */
+interface BulkTagResult {
+  added?: number;
+  removed?: number;
+  errors: string[];
+}
+
+/**
+ * Result of a bulk duplicate operation
+ */
+interface BulkDuplicateResult {
+  created: number[];
+  errors: string[];
+}
+
+/**
+ * Task row from database
+ */
+interface TaskRow {
+  id: number;
+  title: string;
+  description: string | null;
+  column_id: number;
+  swimlane_id: number | null;
+  position: number;
+  priority: string | null;
+  due_date: string | null;
+  recurring_rule: string | null;
+  created_by: number | null;
+  assigned_to: number | null;
+  gtd_status: string | null;
+  context: string | null;
+  energy_required: string | null;
+  time_estimate: number | null;
+  urgency: number | null;
+  importance: number | null;
+  execution_status: string | null;
+  project_id: number | null;
+  category: string | null;
+}
+
+/**
+ * Tag row from database
+ */
+interface TagRow {
+  tag_id: number;
+}
+
+/**
+ * Subtask row from database
+ */
+interface SubtaskRow {
+  id: number;
+  task_id: number;
+  title: string;
+  completed: number;
+  position: number;
+}
+
+/**
+ * Fields that can be updated in bulk
+ */
+type UpdateFields = Partial<Pick<TaskRow, 
+  'column_id' | 'swimlane_id' | 'priority' | 'due_date' | 
+  'assigned_to' | 'gtd_status' | 'execution_status' | 
+  'urgency' | 'importance' | 'project_id' | 'category'
+> & { pinned?: number }>;
+
+/**
  * Update multiple tasks at once
  * @param {Array<number>} taskIds - Array of task IDs to update
  * @param {Object} updates - Fields to update
  * @param {number} userId - ID of user performing the update
  * @returns {Promise<Object>} Result object with count of updated tasks
  */
-async function bulkUpdateTasks(taskIds, updates, userId = null) {
+async function bulkUpdateTasks(taskIds: number[], updates: UpdateFields, userId: number | null = null): Promise<BulkUpdateResult> {
   if (!taskIds || taskIds.length === 0) {
     return { updated: 0, errors: [] };
   }
@@ -27,13 +115,13 @@ async function bulkUpdateTasks(taskIds, updates, userId = null) {
     'urgency', 'importance', 'pinned', 'category', 'project_id'
   ];
 
-  const updateFields = [];
-  const params = [];
+  const updateFields: string[] = [];
+  const params: (string | number | null)[] = [];
 
   for (const [key, value] of Object.entries(updates)) {
     if (allowedFields.includes(key)) {
       updateFields.push(`${key} = ?`);
-      params.push(value);
+      params.push(value as string | number | null);
     }
   }
 
@@ -82,10 +170,11 @@ async function bulkUpdateTasks(taskIds, updates, userId = null) {
       taskIds,
       errors: []
     };
-  } catch (error) {
+  } catch (error: unknown) {
+    const err = error as Error;
     return {
       updated: 0,
-      errors: [error.message]
+      errors: [err.message]
     };
   }
 }
@@ -96,7 +185,7 @@ async function bulkUpdateTasks(taskIds, updates, userId = null) {
  * @param {number} userId - ID of user performing the deletion
  * @returns {Promise<Object>} Result object with count of deleted tasks
  */
-async function bulkDeleteTasks(taskIds, userId = null) {
+async function bulkDeleteTasks(taskIds: number[], userId: number | null = null): Promise<BulkDeleteResult> {
   if (!taskIds || taskIds.length === 0) {
     return { deleted: 0, errors: [] };
   }
@@ -127,10 +216,11 @@ async function bulkDeleteTasks(taskIds, userId = null) {
       taskIds,
       errors: []
     };
-  } catch (error) {
+  } catch (error: unknown) {
+    const err = error as Error;
     return {
       deleted: 0,
-      errors: [error.message]
+      errors: [err.message]
     };
   }
 }
@@ -142,7 +232,7 @@ async function bulkDeleteTasks(taskIds, userId = null) {
  * @param {number} userId - ID of user performing the move
  * @returns {Promise<Object>} Result object
  */
-async function bulkMoveTasks(taskIds, targetColumnId, userId = null) {
+async function bulkMoveTasks(taskIds: number[], targetColumnId: number, userId: number | null = null): Promise<BulkUpdateResult> {
   return bulkUpdateTasks(taskIds, { column_id: targetColumnId }, userId);
 }
 
@@ -153,7 +243,7 @@ async function bulkMoveTasks(taskIds, targetColumnId, userId = null) {
  * @param {number} userId - ID of user performing the assignment
  * @returns {Promise<Object>} Result object
  */
-async function bulkAssignTasks(taskIds, assigneeId, userId = null) {
+async function bulkAssignTasks(taskIds: number[], assigneeId: number, userId: number | null = null): Promise<BulkUpdateResult> {
   return bulkUpdateTasks(taskIds, { assigned_to: assigneeId }, userId);
 }
 
@@ -164,7 +254,7 @@ async function bulkAssignTasks(taskIds, assigneeId, userId = null) {
  * @param {number} userId - ID of user performing the update
  * @returns {Promise<Object>} Result object
  */
-async function bulkSetPriority(taskIds, priority, userId = null) {
+async function bulkSetPriority(taskIds: number[], priority: string, userId: number | null = null): Promise<BulkUpdateResult> {
   const validPriorities = ['low', 'medium', 'high', 'critical'];
   if (!validPriorities.includes(priority)) {
     return { updated: 0, errors: ['Invalid priority level'] };
@@ -178,13 +268,13 @@ async function bulkSetPriority(taskIds, priority, userId = null) {
  * @param {Array<number>} tagIds - Array of tag IDs to add
  * @returns {Promise<Object>} Result object
  */
-async function bulkAddTags(taskIds, tagIds) {
+async function bulkAddTags(taskIds: number[], tagIds: number[]): Promise<BulkTagResult> {
   if (!taskIds || taskIds.length === 0 || !tagIds || tagIds.length === 0) {
     return { added: 0, errors: [] };
   }
 
   let addedCount = 0;
-  const errors = [];
+  const errors: string[] = [];
 
   try {
     for (const taskId of taskIds) {
@@ -195,15 +285,17 @@ async function bulkAddTags(taskIds, tagIds) {
             [taskId, tagId]
           );
           addedCount++;
-        } catch (err) {
-          errors.push(`Failed to add tag ${tagId} to task ${taskId}: ${err.message}`);
+        } catch (err: unknown) {
+          const e = err as Error;
+          errors.push(`Failed to add tag ${tagId} to task ${taskId}: ${e.message}`);
         }
       }
     }
 
     return { added: addedCount, errors };
-  } catch (error) {
-    return { added: addedCount, errors: [error.message] };
+  } catch (error: unknown) {
+    const err = error as Error;
+    return { added: addedCount, errors: [err.message] };
   }
 }
 
@@ -213,7 +305,7 @@ async function bulkAddTags(taskIds, tagIds) {
  * @param {Array<number>} tagIds - Array of tag IDs to remove
  * @returns {Promise<Object>} Result object
  */
-async function bulkRemoveTags(taskIds, tagIds) {
+async function bulkRemoveTags(taskIds: number[], tagIds: number[]): Promise<BulkTagResult> {
   if (!taskIds || taskIds.length === 0 || !tagIds || tagIds.length === 0) {
     return { removed: 0, errors: [] };
   }
@@ -231,10 +323,11 @@ async function bulkRemoveTags(taskIds, tagIds) {
       removed: result.changes || 0,
       errors: []
     };
-  } catch (error) {
+  } catch (error: unknown) {
+    const err = error as Error;
     return {
       removed: 0,
-      errors: [error.message]
+      errors: [err.message]
     };
   }
 }
@@ -245,18 +338,18 @@ async function bulkRemoveTags(taskIds, tagIds) {
  * @param {number} userId - ID of user performing the duplication
  * @returns {Promise<Object>} Result object with new task IDs
  */
-async function bulkDuplicateTasks(taskIds, userId = null) {
+async function bulkDuplicateTasks(taskIds: number[], userId: number | null = null): Promise<BulkDuplicateResult> {
   if (!taskIds || taskIds.length === 0) {
     return { created: [], errors: [] };
   }
 
-  const newTaskIds = [];
-  const errors = [];
+  const newTaskIds: number[] = [];
+  const errors: string[] = [];
 
   try {
     // Fetch all tasks at once to avoid N+1 query pattern
     const placeholders = taskIds.map(() => '?').join(',');
-    const tasks = await allAsync(
+    const tasks = await allAsync<TaskRow>(
       `SELECT * FROM tasks WHERE id IN (${placeholders})`,
       taskIds
     );
@@ -301,7 +394,7 @@ async function bulkDuplicateTasks(taskIds, userId = null) {
       newTaskIds.push(result.lastID);
 
       // Copy tags for this task
-      const tags = await allAsync(
+      const tags = await allAsync<TagRow>(
         'SELECT tag_id FROM task_tags WHERE task_id = ?',
         [original.id]
       );
@@ -313,7 +406,7 @@ async function bulkDuplicateTasks(taskIds, userId = null) {
       }
 
       // Copy subtasks for this task
-      const subtasks = await allAsync(
+      const subtasks = await allAsync<SubtaskRow>(
         'SELECT * FROM subtasks WHERE task_id = ? ORDER BY position',
         [original.id]
       );
@@ -329,10 +422,11 @@ async function bulkDuplicateTasks(taskIds, userId = null) {
       created: newTaskIds,
       errors
     };
-  } catch (error) {
+  } catch (error: unknown) {
+    const err = error as Error;
     return {
       created: newTaskIds,
-      errors: [...errors, error.message]
+      errors: [...errors, err.message]
     };
   }
 }
