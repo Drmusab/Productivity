@@ -37,6 +37,7 @@ import {
   deleteSwimlane
 } from '../services/boardService';
 import { useNotification } from '../contexts/NotificationContext';
+import { useAuth } from '../contexts/AuthContext';
 import TaskCard from '../components/TaskCard';
 import TaskDialog from '../components/TaskDialog';
 import ColumnDialog from '../components/ColumnDialog';
@@ -51,6 +52,7 @@ import {
 const Board = () => {
   const { id } = useParams();
   const { showSuccess, showError } = useNotification();
+  const { user } = useAuth();
   
   const [board, setBoard] = useState(null);
   const [tasks, setTasks] = useState([]);
@@ -386,7 +388,7 @@ const Board = () => {
 
   const handleDeleteTask = async (taskId) => {
     try {
-      const deletedBy = 1; // TODO: Get current user ID from auth context
+      const deletedBy = user?.id || 1; // Use authenticated user ID or fallback to 1
       await deleteTask(taskId, deletedBy);
       showSuccess('تم حذف المهمة بنجاح');
       
