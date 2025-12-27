@@ -43,6 +43,15 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
       .slice(0, maxResults);
   }, [commands, search, maxResults]);
 
+  // Create index map for O(1) lookup
+  const commandIndexMap = React.useMemo(() => {
+    const map = new Map<string, number>();
+    filteredCommands.forEach((cmd, index) => {
+      map.set(cmd.id, index);
+    });
+    return map;
+  }, [filteredCommands]);
+
   // Group commands by category
   const groupedCommands = React.useMemo(() => {
     const groups = new Map<string, Command[]>();
@@ -148,7 +157,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
 
                 {/* Commands */}
                 {categoryCommands.map((command, _index) => {
-                  const globalIndex = filteredCommands.indexOf(command);
+                  const globalIndex = commandIndexMap.get(command.id) ?? 0;
                   const isSelected = globalIndex === selectedIndex;
 
                   return (
