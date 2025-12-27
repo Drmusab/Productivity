@@ -10,6 +10,21 @@ import { parseRecurringRule } from '../utils/recurringRule';
 const MILLISECONDS_PER_MINUTE = 60 * 1000;
 const MILLISECONDS_PER_HOUR = 60 * MILLISECONDS_PER_MINUTE;
 
+/**
+ * Task row from database
+ */
+interface TaskDbRow {
+  id: number;
+  title: string;
+  description?: string | null;
+  column_id: number;
+  priority?: string | null;
+  due_date: string;
+  recurring_rule?: string | null;
+  created_by?: number | null;
+  assigned_to?: number | null;
+}
+
 // Start the scheduler
 const startScheduler = () => {
   console.log('Starting task scheduler...');
@@ -75,7 +90,7 @@ const startScheduler = () => {
       // Get tasks with recurring rules
       db.all(
         'SELECT * FROM tasks WHERE recurring_rule IS NOT NULL',
-        async (err, tasks) => {
+        async (err, tasks: TaskDbRow[]) => {
           if (err) {
             console.error('Error checking recurring tasks:', err);
             return;
@@ -83,9 +98,8 @@ const startScheduler = () => {
           
           for (const task of tasks) {
             try {
-              const taskAny: any = task;
-              const recurringRule = parseRecurringRule(taskAny.recurring_rule);
-              const lastDueDate = new Date(taskAny.due_date);
+              const recurringRule = parseRecurringRule(task.recurring_rule);
+              const lastDueDate = new Date(task.due_date);
 
               // Check if we need to create a new instance of this recurring task
               if (shouldCreateRecurringTask(lastDueDate, recurringRule, today)) {
@@ -95,9 +109,8 @@ const startScheduler = () => {
                 sendRoutineReminder(task);
               }
             } catch (error) {
-              const errorAny: any = error;
-              const taskAny: any = task;
-              console.error(`Error processing recurring task ${taskAny.id}:`, errorAny);
+              const err = error as Error;
+              console.error(`Error processing recurring task ${task.id}:`, err);
             }
           }
         }

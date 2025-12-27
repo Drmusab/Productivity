@@ -37,6 +37,68 @@ interface TaskSearchFilters {
 }
 
 /**
+ * Task row from database query
+ */
+interface TaskQueryRow {
+  id: number;
+  title: string;
+  description: string | null;
+  column_id: number;
+  column_name?: string;
+  column_color?: string;
+  swimlane_id: number | null;
+  swimlane_name?: string;
+  position: number;
+  priority: string | null;
+  due_date: string | null;
+  created_by: number | null;
+  created_by_name?: string;
+  assigned_to: number | null;
+  assigned_to_name?: string;
+  project_id: number | null;
+  project_name?: string;
+  [key: string]: unknown;
+}
+
+/**
+ * Tag row from database query
+ */
+interface TagQueryRow {
+  task_id: number;
+  tag_id: number;
+  tag_name: string;
+  tag_color: string;
+}
+
+/**
+ * Subtask row from database query
+ */
+interface SubtaskQueryRow {
+  id: number;
+  task_id: number;
+  title: string;
+  completed: number;
+  position: number;
+}
+
+/**
+ * Tag data attached to a task
+ */
+interface TaskTag {
+  tag_id: number;
+  tag_name: string;
+  tag_color: string;
+}
+
+/**
+ * Task with tags and subtasks
+ */
+interface TaskWithRelations extends TaskQueryRow {
+  tags: TaskTag[];
+  subtasks: SubtaskQueryRow[];
+}
+
+/**
  * Build SQL WHERE clause from filter options
  * @param {Object} filters - Filter options
  * @returns {Object} Object with SQL where clause and parameters
@@ -283,27 +345,27 @@ async function searchTasks(options: TaskSearchFilters = {}) {
     ${paginationClause}
   `;
 
-  const tasks = await allAsync(sql, params);
+  const tasks = await allAsync<TaskQueryRow>(sql, params);
 
   if (!tasks.length) {
-    return tasks;
+    return tasks as TaskWithRelations[];
   }
 
   const taskIds = tasks.map(task => task.id);
   const placeholders = taskIds.map(() => '?').join(',');
 
-  const tagRows = await allAsync(`
+  const tagRows = await allAsync<TagQueryRow>(`
     SELECT tt.task_id, t.id as tag_id, t.name as tag_name, t.color as tag_color
     FROM task_tags tt
     JOIN tags t ON t.id = tt.tag_id
     WHERE tt.task_id IN (${placeholders})
   `, taskIds);
 
-  const subtasks = await allAsync(`
+  const subtasks = await allAsync<SubtaskQueryRow>(`
     SELECT * FROM subtasks WHERE task_id IN (${placeholders}) ORDER BY position ASC
   `, taskIds);
 
-  const tagsByTask = tagRows.reduce((acc: Record<number, any[]>, row) => {
+  const tagsByTask = tagRows.reduce((acc: Record<number, TaskTag[]>, row) => {
     if (!acc[row.task_id]) {
       acc[row.task_id] = [];
     }
@@ -315,7 +377,7 @@ async function searchTasks(options: TaskSearchFilters = {}) {
     return acc;
   }, {});
 
-  const subtasksByTask = subtasks.reduce((acc: Record<number, any[]>, row) => {
+  const subtasksByTask = subtasks.reduce((acc: Record<number, SubtaskQueryRow[]>, row) => {
     if (!acc[row.task_id]) {
       acc[row.task_id] = [];
     }

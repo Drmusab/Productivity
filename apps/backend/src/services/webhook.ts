@@ -47,14 +47,6 @@ interface WebhookResult {
 }
 
 /**
- * Request headers
- */
-interface RequestHeaders {
-  'Content-Type': string;
-  Authorization?: string;
-}
-
-/**
  * Triggers a webhook by sending a POST request to the configured endpoint.
  * Retrieves webhook configuration from database, validates it, and sends the payload.
  * Supports optional API key authentication via Bearer token.
@@ -111,7 +103,7 @@ const triggerWebhook = async (webhookId: number, payload: Record<string, unknown
     }
 
     // Prepare HTTP headers
-    const headers: RequestHeaders = {
+    const headers: Record<string, string> = {
       'Content-Type': 'application/json'
     };
 
@@ -163,3 +155,4 @@ const isValidUrl = (urlString: string): boolean => {
 };
 
 export { triggerWebhook };
+export type { WebhookResult };

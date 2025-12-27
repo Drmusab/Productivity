@@ -206,7 +206,7 @@ const createRecurringTask = async (originalTask: OriginalTask, recurringRule: Re
   const taskId = insertResult.lastID;
 
   // Record task creation in history
-  recordTaskHistory(taskId, 'created', null, null, originalTask.created_by);
+  recordTaskHistory(taskId, 'created', null, null, originalTask.created_by ?? null);
 
   // Copy tags from original task to new task instance
   const tagRows = await allAsync<TagRow>(
