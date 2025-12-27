@@ -220,14 +220,14 @@ Some **bold** text before [[Target]] and more text.
         contentMarkdown: 'Project details.',
       });
       
-      const taskResult = await runAsync(
+      const taskInsertResult = await runAsync(
         'INSERT INTO tasks (title, description, column_id, position) VALUES (?, ?, ?, ?)',
         ['Project Task', 'Task for the project', columnId, 0]
       );
       
       // Link task and note
       await noteService.createTaskNoteRelation({
-        taskId: taskResult.lastID,
+        taskId: taskInsertResult.lastID,
         noteId,
         relationType: TaskNoteRelationType.REFERENCE,
       });
