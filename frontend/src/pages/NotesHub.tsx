@@ -30,6 +30,8 @@ import {
   Tooltip,
   Typography,
   LinearProgress,
+  ToggleButtonGroup,
+  ToggleButton,
 } from '@mui/material';
 import {
   Add,
@@ -43,9 +45,12 @@ import {
   Link as LinkIcon,
   School,
   Refresh,
+  ViewModule,
+  ViewQuilt,
 } from '@mui/icons-material';
 
 import { useNotification } from '../contexts/NotificationContext';
+import { NotesWorkspace } from '../components/Notes';
 import {
   getNotes,
   getNote,
@@ -164,6 +169,7 @@ const NotesHub: React.FC = () => {
   const { showError, showSuccess } = useNotification();
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState(0);
+  const [viewMode, setViewMode] = useState<'grid' | 'workspace'>('workspace');
 
   // Data
   const [notes, setNotes] = useState<any[]>([]);
@@ -376,6 +382,36 @@ const NotesHub: React.FC = () => {
     );
   }
 
+  // Render Workspace View (3-panel layout)
+  if (viewMode === 'workspace') {
+    return (
+      <Box>
+        {/* View Mode Toggle Header */}
+        <Box sx={{ p: 1, borderBottom: 1, borderColor: 'divider', display: 'flex', justifyContent: 'flex-end' }}>
+          <ToggleButtonGroup
+            value={viewMode}
+            exclusive
+            onChange={(e, newMode) => newMode && setViewMode(newMode)}
+            size="small"
+          >
+            <ToggleButton value="workspace" aria-label="workspace view">
+              <Tooltip title="Workspace View">
+                <ViewQuilt fontSize="small" />
+              </Tooltip>
+            </ToggleButton>
+            <ToggleButton value="grid" aria-label="grid view">
+              <Tooltip title="Grid View">
+                <ViewModule fontSize="small" />
+              </Tooltip>
+            </ToggleButton>
+          </ToggleButtonGroup>
+        </Box>
+        <NotesWorkspace />
+      </Box>
+    );
+  }
+
+  // Grid View (existing implementation)
   return (
     <Box sx={{ p: 2 }}>
       {/* Header */}
@@ -390,7 +426,24 @@ const NotesHub: React.FC = () => {
               </Typography>
             </Box>
           </Stack>
-          <Stack direction="row" spacing={2}>
+          <Stack direction="row" spacing={2} alignItems="center">
+            <ToggleButtonGroup
+              value={viewMode}
+              exclusive
+              onChange={(e, newMode) => newMode && setViewMode(newMode)}
+              size="small"
+            >
+              <ToggleButton value="workspace" aria-label="workspace view">
+                <Tooltip title="Workspace View">
+                  <ViewQuilt fontSize="small" />
+                </Tooltip>
+              </ToggleButton>
+              <ToggleButton value="grid" aria-label="grid view">
+                <Tooltip title="Grid View">
+                  <ViewModule fontSize="small" />
+                </Tooltip>
+              </ToggleButton>
+            </ToggleButtonGroup>
             <Button
               variant="outlined"
               startIcon={<Folder />}

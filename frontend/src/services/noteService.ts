@@ -107,6 +107,42 @@ export const getZettelkastenGraph = () => {
   return api.get('/notes/zettelkasten/graph');
 };
 
+// ============= TASK-NOTE RELATIONS =============
+
+export type TaskNoteRelationType = 'reference' | 'spec' | 'meeting' | 'evidence';
+
+export const getLinkedTasks = (noteId: string) => {
+  return api.get(`/api/notes/${noteId}/tasks`);
+};
+
+export const getLinkedNotes = (taskId: string) => {
+  return api.get(`/api/tasks/${taskId}/notes`);
+};
+
+export const linkTaskToNote = (taskId: string, noteId: string, relationType: TaskNoteRelationType = 'reference') => {
+  return api.post(`/api/tasks/${taskId}/notes`, { note_id: noteId, relation_type: relationType });
+};
+
+export const unlinkTaskFromNote = (taskId: string, noteId: string) => {
+  return api.delete(`/api/tasks/${taskId}/notes/${noteId}`);
+};
+
+export const createNoteFromTask = (taskId: string) => {
+  return api.post(`/api/tasks/${taskId}/create-note`);
+};
+
+// ============= DAILY NOTES =============
+
+export const getDailyNote = (date?: string) => {
+  const targetDate = date || new Date().toISOString().split('T')[0];
+  return api.get(`/api/notes/daily/${targetDate}`);
+};
+
+export const createDailyNote = (date?: string) => {
+  const targetDate = date || new Date().toISOString().split('T')[0];
+  return api.post('/api/notes/daily', { date: targetDate });
+};
+
 const noteService = {
   getFolders,
   createFolder,
@@ -121,7 +157,14 @@ const noteService = {
   deleteNote,
   createNoteLink,
   removeNoteLink,
-  getZettelkastenGraph
+  getZettelkastenGraph,
+  getLinkedTasks,
+  getLinkedNotes,
+  linkTaskToNote,
+  unlinkTaskFromNote,
+  createNoteFromTask,
+  getDailyNote,
+  createDailyNote,
 };
 
 export default noteService;

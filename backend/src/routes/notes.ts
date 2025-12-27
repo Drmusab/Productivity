@@ -601,4 +601,123 @@ router.get('/zettelkasten/graph', async (req, res) => {
   }
 });
 
+// ============= TASK-NOTE RELATIONS =============
+
+/**
+ * Initialize task_note_relations table
+ */
+const initTaskNoteRelationsTable = async () => {
+  await runAsync(`
+    CREATE TABLE IF NOT EXISTS task_note_relations (
+      id TEXT PRIMARY KEY,
+      task_id INTEGER NOT NULL,
+      note_id TEXT NOT NULL,
+      relation_type TEXT DEFAULT 'reference',
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY (note_id) REFERENCES notes(id) ON DELETE CASCADE
+    )
+  `);
+  
+  // Create index for faster lookups
+  await runAsync(`
+    CREATE INDEX IF NOT EXISTS idx_task_note_relations_task_id ON task_note_relations(task_id)
+  `);
+  await runAsync(`
+    CREATE INDEX IF NOT EXISTS idx_task_note_relations_note_id ON task_note_relations(note_id)
+  `);
+};
+
+initTaskNoteRelationsTable().catch(console.error);
+
+/**
+ * GET /api/notes/:id/tasks
+ * Get tasks linked to a note
+ */
+router.get('/:id/tasks', async (req, res) => {
+  try {
+    const { id } = req.params;
+    
+    const tasks = await allAsync(
+      `SELECT t.id, t.title, t.priority, t.description, c.name as column_name, tnr.relation_type, tnr.created_at as linked_at
+       FROM task_note_relations tnr
+       INNER JOIN tasks t ON tnr.task_id = t.id
+       LEFT JOIN columns c ON t.column_id = c.id
+       WHERE tnr.note_id = ?
+       ORDER BY tnr.created_at DESC`,
+      [id]
+    );
+    
+    res.json(tasks);
+  } catch (error) {
+    console.error('Error fetching linked tasks:', error);
+    res.status(500).json({ error: 'Failed to fetch linked tasks' });
+  }
+});
+
+// ============= DAILY NOTES =============
+
+/**
+ * GET /api/notes/daily/:date
+ * Get or create daily note for a specific date
+ */
+router.get('/daily/:date', async (req, res) => {
+  try {
+    const { date } = req.params;
+    const dailyTitle = `Daily Note - ${date}`;
+    
+    let note = await getAsync('SELECT * FROM notes WHERE title = ?', [dailyTitle]);
+    
+    if (!note) {
+      // Create daily note
+      const id = uuidv4();
+      const content = `# ${dailyTitle}\n\n## Tasks\n\n- [ ] \n\n## Notes\n\n`;
+      
+      await runAsync(
+        `INSERT INTO notes (id, title, content, type) VALUES (?, ?, ?, ?)`,
+        [id, dailyTitle, content, 'standard']
+      );
+      
+      note = await getAsync('SELECT * FROM notes WHERE id = ?', [id]);
+    }
+    
+    res.json(note);
+  } catch (error) {
+    console.error('Error fetching daily note:', error);
+    res.status(500).json({ error: 'Failed to fetch daily note' });
+  }
+});
+
+/**
+ * POST /api/notes/daily
+ * Create a daily note for a specific date
+ */
+router.post('/daily', async (req, res) => {
+  try {
+    const { date } = req.body;
+    const targetDate = date || new Date().toISOString().split('T')[0];
+    const dailyTitle = `Daily Note - ${targetDate}`;
+    
+    // Check if daily note already exists
+    let existingNote = await getAsync('SELECT * FROM notes WHERE title = ?', [dailyTitle]);
+    if (existingNote) {
+      return res.json(existingNote);
+    }
+    
+    // Create daily note
+    const id = uuidv4();
+    const content = `# ${dailyTitle}\n\n## Tasks\n\n- [ ] \n\n## Notes\n\n`;
+    
+    await runAsync(
+      `INSERT INTO notes (id, title, content, type) VALUES (?, ?, ?, ?)`,
+      [id, dailyTitle, content, 'standard']
+    );
+    
+    const note = await getAsync('SELECT * FROM notes WHERE id = ?', [id]);
+    res.status(201).json(note);
+  } catch (error) {
+    console.error('Error creating daily note:', error);
+    res.status(500).json({ error: 'Failed to create daily note' });
+  }
+});
+
 export default router;

@@ -708,6 +708,173 @@ router.post('/bulk/duplicate', async (req, res) => {
   }
 });
 
+// ============= TASK-NOTE RELATIONS =============
+
+/**
+ * GET /api/tasks/:id/notes
+ * Get notes linked to a task
+ */
+router.get('/:id/notes', async (req, res) => {
+  try {
+    const { id } = req.params;
+    
+    const notes = await new Promise((resolve, reject) => {
+      db.all(
+        `SELECT n.id, n.title, n.type, n.folder_id, tnr.relation_type, tnr.created_at as linked_at
+         FROM task_note_relations tnr
+         INNER JOIN notes n ON tnr.note_id = n.id
+         WHERE tnr.task_id = ?
+         ORDER BY tnr.created_at DESC`,
+        [id],
+        (err, rows) => {
+          if (err) reject(err);
+          else resolve(rows || []);
+        }
+      );
+    });
+    
+    res.json(notes);
+  } catch (error) {
+    console.error('Error fetching linked notes:', error);
+    res.status(500).json({ error: 'Failed to fetch linked notes' });
+  }
+});
+
+/**
+ * POST /api/tasks/:id/notes
+ * Link a note to a task
+ */
+router.post('/:id/notes', [
+  body('note_id').notEmpty().withMessage('Note ID is required'),
+  body('relation_type').optional().isIn(['reference', 'spec', 'meeting', 'evidence'])
+], async (req, res) => {
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    return res.status(400).json({ errors: errors.array() });
+  }
+
+  try {
+    const { id } = req.params;
+    const { note_id, relation_type = 'reference' } = req.body;
+    
+    // Check if relation already exists
+    const existing = await new Promise((resolve, reject) => {
+      db.get(
+        'SELECT * FROM task_note_relations WHERE task_id = ? AND note_id = ?',
+        [id, note_id],
+        (err, row) => {
+          if (err) reject(err);
+          else resolve(row);
+        }
+      );
+    });
+    
+    if (existing) {
+      return res.status(400).json({ error: 'Relation already exists' });
+    }
+    
+    // Create relation
+    const relationId = require('uuid').v4();
+    await new Promise((resolve, reject) => {
+      db.run(
+        `INSERT INTO task_note_relations (id, task_id, note_id, relation_type) VALUES (?, ?, ?, ?)`,
+        [relationId, id, note_id, relation_type],
+        function(err) {
+          if (err) reject(err);
+          else resolve(this.lastID);
+        }
+      );
+    });
+    
+    res.status(201).json({ id: relationId, task_id: id, note_id, relation_type });
+  } catch (error) {
+    console.error('Error linking note to task:', error);
+    res.status(500).json({ error: 'Failed to link note to task' });
+  }
+});
+
+/**
+ * DELETE /api/tasks/:id/notes/:noteId
+ * Unlink a note from a task
+ */
+router.delete('/:id/notes/:noteId', async (req, res) => {
+  try {
+    const { id, noteId } = req.params;
+    
+    await new Promise((resolve, reject) => {
+      db.run(
+        'DELETE FROM task_note_relations WHERE task_id = ? AND note_id = ?',
+        [id, noteId],
+        function(err) {
+          if (err) reject(err);
+          else resolve(this.changes);
+        }
+      );
+    });
+    
+    res.json({ message: 'Note unlinked successfully' });
+  } catch (error) {
+    console.error('Error unlinking note from task:', error);
+    res.status(500).json({ error: 'Failed to unlink note from task' });
+  }
+});
+
+/**
+ * POST /api/tasks/:id/create-note
+ * Create a new note from a task (with auto-link)
+ */
+router.post('/:id/create-note', async (req, res) => {
+  try {
+    const { id } = req.params;
+    
+    // Get task details
+    const task = await new Promise((resolve, reject) => {
+      db.get('SELECT * FROM tasks WHERE id = ?', [id], (err, row) => {
+        if (err) reject(err);
+        else resolve(row);
+      });
+    });
+    
+    if (!task) {
+      return res.status(404).json({ error: 'Task not found' });
+    }
+    
+    // Create note
+    const { v4: uuidv4 } = require('uuid');
+    const noteId = uuidv4();
+    const noteContent = `# ${task.title}\n\n${task.description || ''}\n\n---\n\n*Created from task*`;
+    
+    await new Promise((resolve, reject) => {
+      db.run(
+        `INSERT INTO notes (id, title, content, type) VALUES (?, ?, ?, ?)`,
+        [noteId, task.title, noteContent, 'standard'],
+        function(err) {
+          if (err) reject(err);
+          else resolve(this.lastID);
+        }
+      );
+    });
+    
+    // Create relation
+    const relationId = uuidv4();
+    await new Promise((resolve, reject) => {
+      db.run(
+        `INSERT INTO task_note_relations (id, task_id, note_id, relation_type) VALUES (?, ?, ?, ?)`,
+        [relationId, id, noteId, 'spec'],
+        function(err) {
+          if (err) reject(err);
+          else resolve(this.lastID);
+        }
+      );
+    });
+    
+    res.status(201).json({ id: noteId, title: task.title, task_id: id });
+  } catch (error) {
+    console.error('Error creating note from task:', error);
+    res.status(500).json({ error: 'Failed to create note from task' });
+  }
+});
+
 export = router;
 
 function normalizeOptionalInt(value, { treatUndefinedAsNull = false } = {}) {

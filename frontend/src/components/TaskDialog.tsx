@@ -1,5 +1,5 @@
 // @ts-nocheck
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   Dialog,
   DialogTitle,
@@ -19,12 +19,21 @@ import {
   FormControlLabel,
   Divider,
   Grid,
-  Paper
+  Paper,
+  List,
+  ListItem,
+  ListItemButton,
+  ListItemIcon,
+  ListItemText,
+  CircularProgress,
 } from '@mui/material';
 import {
   Add,
   Delete,
-  Close
+  Close,
+  Note,
+  Link as LinkIcon,
+  OpenInNew,
 } from '@mui/icons-material';
 import { DateTimePicker } from '@mui/x-date-pickers/DateTimePicker';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
@@ -32,6 +41,7 @@ import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import ConfirmDialog from './ConfirmDialog';
+import { getLinkedNotes, createNoteFromTask } from '../services/noteService';
 
 const TaskDialog = ({
   open,
@@ -42,7 +52,8 @@ const TaskDialog = ({
   availableColumns = [],
   availableSwimlanes = [],
   availableTags = [],
-  availableUsers = []
+  availableUsers = [],
+  onNavigateToNote,
 }) => {
   const [formData, setFormData] = useState({
     title: '',
@@ -60,6 +71,23 @@ const TaskDialog = ({
   const [newSubtask, setNewSubtask] = useState('');
   const [showMarkdownPreview, setShowMarkdownPreview] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [linkedNotes, setLinkedNotes] = useState([]);
+  const [loadingNotes, setLoadingNotes] = useState(false);
+
+  // Load linked notes when task is opened
+  const loadLinkedNotes = useCallback(async (taskId) => {
+    if (!taskId) return;
+    try {
+      setLoadingNotes(true);
+      const response = await getLinkedNotes(taskId);
+      setLinkedNotes(response.data || []);
+    } catch (error) {
+      console.log('Could not load linked notes:', error);
+      setLinkedNotes([]);
+    } finally {
+      setLoadingNotes(false);
+    }
+  }, []);
 
   useEffect(() => {
     if (task) {
@@ -68,6 +96,9 @@ const TaskDialog = ({
         due_date: task.due_date ? new Date(task.due_date) : null,
         recurring_rule: task.recurring_rule ? JSON.parse(task.recurring_rule) : null
       });
+      if (task.id) {
+        loadLinkedNotes(task.id);
+      }
     } else {
       setFormData({
         title: '',
@@ -82,10 +113,25 @@ const TaskDialog = ({
         tags: [],
         subtasks: []
       });
+      setLinkedNotes([]);
     }
     setNewSubtask('');
     setShowMarkdownPreview(false);
-  }, [task, open]);
+  }, [task, open, loadLinkedNotes]);
+
+  // Handle create note from task
+  const handleCreateNoteFromTask = useCallback(async () => {
+    if (!task?.id) return;
+    try {
+      const response = await createNoteFromTask(task.id);
+      if (response.data && onNavigateToNote) {
+        onNavigateToNote(response.data.id);
+      }
+      loadLinkedNotes(task.id);
+    } catch (error) {
+      console.error('Failed to create note from task:', error);
+    }
+  }, [task?.id, onNavigateToNote, loadLinkedNotes]);
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -472,6 +518,88 @@ const TaskDialog = ({
               </Grid>
             )}
           </Grid>
+
+          {/* Linked Notes Section */}
+          {task?.id && (
+            <Grid item xs={12}>
+              <Divider sx={{ my: 2 }} />
+              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
+                <Typography variant="subtitle1" sx={{ display: 'flex', alignItems: 'center' }}>
+                  <Note sx={{ mr: 1, color: 'primary.main' }} />
+                  Linked Notes
+                </Typography>
+                <Box>
+                  <Button
+                    size="small"
+                    startIcon={<Add />}
+                    onClick={handleCreateNoteFromTask}
+                    variant="contained"
+                    sx={{ mr: 1 }}
+                  >
+                    Create Note
+                  </Button>
+                  <Button
+                    size="small"
+                    startIcon={<LinkIcon />}
+                    onClick={() => {
+                      // TODO: Open link note dialog
+                      console.log('Link existing note');
+                    }}
+                  >
+                    Link Note
+                  </Button>
+                </Box>
+              </Box>
+              {loadingNotes ? (
+                <Box sx={{ display: 'flex', justifyContent: 'center', py: 2 }}>
+                  <CircularProgress size={24} />
+                </Box>
+              ) : linkedNotes.length === 0 ? (
+                <Paper sx={{ p: 2, textAlign: 'center', bgcolor: 'background.default' }}>
+                  <Note color="disabled" sx={{ fontSize: 32, mb: 1 }} />
+                  <Typography variant="body2" color="text.secondary">
+                    No notes linked to this task
+                  </Typography>
+                  <Typography variant="caption" color="text.secondary">
+                    Create a note to document ideas, meeting notes, or specifications
+                  </Typography>
+                </Paper>
+              ) : (
+                <List dense disablePadding>
+                  {linkedNotes.map((note) => (
+                    <ListItem key={note.id} disablePadding>
+                      <ListItemButton
+                        onClick={() => {
+                          if (onNavigateToNote) {
+                            onNavigateToNote(note.id);
+                            onClose();
+                          }
+                        }}
+                      >
+                        <ListItemIcon sx={{ minWidth: 32 }}>
+                          <Note fontSize="small" />
+                        </ListItemIcon>
+                        <ListItemText
+                          primary={note.title}
+                          secondary={note.relation_type}
+                          primaryTypographyProps={{ noWrap: true }}
+                        />
+                        <Chip
+                          label={note.relation_type || 'reference'}
+                          size="small"
+                          variant="outlined"
+                          sx={{ mr: 1 }}
+                        />
+                        <IconButton size="small">
+                          <OpenInNew fontSize="small" />
+                        </IconButton>
+                      </ListItemButton>
+                    </ListItem>
+                  ))}
+                </List>
+              )}
+            </Grid>
+          )}
         </Grid>
       </DialogContent>
       <DialogActions>
