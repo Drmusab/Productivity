@@ -7,6 +7,7 @@
  */
 
 import express from 'express';
+import { randomUUID } from 'crypto';
 const router = express.Router();
 import {  body, query, param, validationResult  } from 'express-validator';
 import {  db  } from '../utils/database';
@@ -774,7 +775,7 @@ router.post('/:id/notes', [
     }
     
     // Create relation
-    const relationId = require('uuid').v4();
+    const relationId = randomUUID();
     await new Promise((resolve, reject) => {
       db.run(
         `INSERT INTO task_note_relations (id, task_id, note_id, relation_type) VALUES (?, ?, ?, ?)`,
@@ -840,8 +841,7 @@ router.post('/:id/create-note', async (req, res) => {
     }
     
     // Create note
-    const { v4: uuidv4 } = require('uuid');
-    const noteId = uuidv4();
+    const noteId = randomUUID();
     const noteContent = `# ${task.title}\n\n${task.description || ''}\n\n---\n\n*Created from task*`;
     
     await new Promise((resolve, reject) => {
@@ -856,7 +856,7 @@ router.post('/:id/create-note', async (req, res) => {
     });
     
     // Create relation
-    const relationId = uuidv4();
+    const relationId = randomUUID();
     await new Promise((resolve, reject) => {
       db.run(
         `INSERT INTO task_note_relations (id, task_id, note_id, relation_type) VALUES (?, ?, ?, ?)`,

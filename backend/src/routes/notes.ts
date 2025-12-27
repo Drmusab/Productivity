@@ -8,7 +8,7 @@
 import express from 'express';
 import { body, validationResult, param, query } from 'express-validator';
 import { runAsync, allAsync, getAsync } from '../utils/database';
-import { v4 as uuidv4 } from 'uuid';
+import { randomUUID } from 'crypto';
 
 const router = express.Router();
 
@@ -136,7 +136,7 @@ router.post('/folders', [
 
   try {
     const { name, parent_id, color, icon } = req.body;
-    const id = uuidv4();
+    const id = randomUUID();
 
     await runAsync(
       `INSERT INTO note_folders (id, name, parent_id, color, icon) VALUES (?, ?, ?, ?, ?)`,
@@ -238,7 +238,7 @@ router.post('/tags', [
 
   try {
     const { name, color } = req.body;
-    const id = uuidv4();
+    const id = randomUUID();
 
     await runAsync(
       `INSERT INTO note_tags (id, name, color) VALUES (?, ?, ?)`,
@@ -405,7 +405,7 @@ router.post('/', [
 
   try {
     const { title, content, type = 'standard', folder_id, color, tags = [], cornell } = req.body;
-    const id = uuidv4();
+    const id = randomUUID();
 
     await runAsync(
       `INSERT INTO notes (id, title, content, type, folder_id, color) VALUES (?, ?, ?, ?, ?, ?)`,
@@ -416,7 +416,7 @@ router.post('/', [
     for (const tagName of tags) {
       let tag = await getAsync('SELECT id FROM note_tags WHERE name = ?', [tagName.toLowerCase()]);
       if (!tag) {
-        const tagId = uuidv4();
+        const tagId = randomUUID();
         await runAsync('INSERT INTO note_tags (id, name) VALUES (?, ?)', [tagId, tagName.toLowerCase()]);
         tag = { id: tagId };
       }
@@ -428,7 +428,7 @@ router.post('/', [
       await runAsync(
         `INSERT INTO cornell_notes (id, note_id, cue_column, notes_column, summary, topic, knowledge_rating) 
          VALUES (?, ?, ?, ?, ?, ?, ?)`,
-        [uuidv4(), id, cornell.cue_column, cornell.notes_column, cornell.summary, cornell.topic, cornell.knowledge_rating || 0]
+        [randomUUID(), id, cornell.cue_column, cornell.notes_column, cornell.summary, cornell.topic, cornell.knowledge_rating || 0]
       );
     }
 
@@ -468,7 +468,7 @@ router.put('/:id', async (req, res) => {
       for (const tagName of tags) {
         let tag = await getAsync('SELECT id FROM note_tags WHERE name = ?', [tagName.toLowerCase()]);
         if (!tag) {
-          const tagId = uuidv4();
+          const tagId = randomUUID();
           await runAsync('INSERT INTO note_tags (id, name) VALUES (?, ?)', [tagId, tagName.toLowerCase()]);
           tag = { id: tagId };
         }
@@ -494,7 +494,7 @@ router.put('/:id', async (req, res) => {
         await runAsync(
           `INSERT INTO cornell_notes (id, note_id, cue_column, notes_column, summary, topic, knowledge_rating) 
            VALUES (?, ?, ?, ?, ?, ?, ?)`,
-          [uuidv4(), id, cornell.cue_column, cornell.notes_column, cornell.summary, cornell.topic, cornell.knowledge_rating || 0]
+          [randomUUID(), id, cornell.cue_column, cornell.notes_column, cornell.summary, cornell.topic, cornell.knowledge_rating || 0]
         );
       }
     }
@@ -547,7 +547,7 @@ router.post('/:id/link', [
       return res.status(404).json({ error: 'Note not found' });
     }
 
-    const linkId = uuidv4();
+    const linkId = randomUUID();
     await runAsync(
       `INSERT INTO note_links (id, source_note_id, target_note_id, context) VALUES (?, ?, ?, ?)`,
       [linkId, id, target_note_id, context]
@@ -669,7 +669,7 @@ router.get('/daily/:date', async (req, res) => {
     
     if (!note) {
       // Create daily note
-      const id = uuidv4();
+      const id = randomUUID();
       const content = `# ${dailyTitle}\n\n## Tasks\n\n- [ ] \n\n## Notes\n\n`;
       
       await runAsync(
@@ -704,7 +704,7 @@ router.post('/daily', async (req, res) => {
     }
     
     // Create daily note
-    const id = uuidv4();
+    const id = randomUUID();
     const content = `# ${dailyTitle}\n\n## Tasks\n\n- [ ] \n\n## Notes\n\n`;
     
     await runAsync(

@@ -8,7 +8,7 @@
 import express from 'express';
 import { body, validationResult, param } from 'express-validator';
 import { runAsync, allAsync, getAsync } from '../utils/database';
-import { v4 as uuidv4 } from 'uuid';
+import { randomUUID } from 'crypto';
 
 const router = express.Router();
 
@@ -234,7 +234,7 @@ router.post('/articles', [
       target_word_count, category, tags = []
     } = req.body;
 
-    const id = uuidv4();
+    const id = randomUUID();
     const wordCount = content ? content.split(/\s+/).filter(Boolean).length : 0;
 
     await runAsync(
@@ -343,7 +343,7 @@ router.post('/goals', [
 
   try {
     const { type, target, period = 'daily', start_date, end_date } = req.body;
-    const id = uuidv4();
+    const id = randomUUID();
 
     await runAsync(
       `INSERT INTO writing_goals (id, type, target, period, start_date, end_date) VALUES (?, ?, ?, ?, ?, ?)`,
@@ -428,7 +428,7 @@ router.post('/sessions', [
 
   try {
     const { article_id, words_written, duration_minutes = 0, notes } = req.body;
-    const id = uuidv4();
+    const id = randomUUID();
 
     await runAsync(
       `INSERT INTO writing_sessions (id, article_id, words_written, duration_minutes, notes) VALUES (?, ?, ?, ?, ?)`,
@@ -544,7 +544,7 @@ router.post('/research', [
 
   try {
     const { title, type = 'link', url, content, summary, topic, status = 'to_read', priority = 'medium', tags = [] } = req.body;
-    const id = uuidv4();
+    const id = randomUUID();
 
     await runAsync(
       `INSERT INTO research_items (id, title, type, url, content, summary, topic, status, priority, tags)
@@ -633,7 +633,7 @@ router.post('/research/:id/notes', [
   try {
     const { id } = req.params;
     const { content, highlight, page_number } = req.body;
-    const noteId = uuidv4();
+    const noteId = randomUUID();
 
     await runAsync(
       `INSERT INTO research_notes (id, research_id, content, highlight, page_number) VALUES (?, ?, ?, ?, ?)`,
@@ -701,7 +701,7 @@ router.post('/inspiration', [
 
   try {
     const { type = 'quote', content, source, url, image_url, tags = [] } = req.body;
-    const id = uuidv4();
+    const id = randomUUID();
 
     await runAsync(
       `INSERT INTO inspiration_items (id, type, content, source, url, image_url, tags) VALUES (?, ?, ?, ?, ?, ?, ?)`,

@@ -9,7 +9,7 @@
  * - Task-note relationship management
  */
 
-import { v4 as uuidv4 } from 'uuid';
+import { randomUUID } from 'crypto';
 import { runAsync, getAsync, allAsync } from '../utils/database';
 import {
   Note,
@@ -53,7 +53,7 @@ export class NoteService {
    * @returns Created note ID
    */
   async createNote(params: CreateNoteParams): Promise<string> {
-    const id = uuidv4();
+    const id = randomUUID();
     const now = new Date().toISOString();
     const frontmatterJson = params.frontmatter ? JSON.stringify(params.frontmatter) : null;
     
@@ -254,7 +254,7 @@ export class NoteService {
     
     // Create new link entries
     for (const wikilink of wikilinks) {
-      const linkId = uuidv4();
+      const linkId = randomUUID();
       const linkType = determineLinkType(wikilink);
       
       // Try to resolve the link
@@ -459,7 +459,7 @@ export class NoteService {
    * @returns Created relation ID
    */
   async createTaskNoteRelation(params: CreateTaskNoteRelationParams): Promise<string> {
-    const id = uuidv4();
+    const id = randomUUID();
     
     await runAsync(
       `INSERT INTO obsidian_task_note_relations (id, task_id, note_id, relation_type, created_at)

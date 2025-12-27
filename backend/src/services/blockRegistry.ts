@@ -10,7 +10,7 @@
  * - Supports dynamic registration of new block types
  */
 
-import { v4 as uuidv4 } from 'uuid';
+import { randomUUID } from 'crypto';
 import {
   Block,
   BlockType,
@@ -180,7 +180,7 @@ export class BlockRegistry {
     const now = new Date().toISOString();
     
     const block: BaseBlock = {
-      id: uuidv4(),
+      id: randomUUID(),
       type: params.type,
       children: [],
       parentId: params.parentId ?? null,

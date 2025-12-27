@@ -8,7 +8,7 @@
 import express from 'express';
 import { body, validationResult, param } from 'express-validator';
 import { runAsync, allAsync, getAsync } from '../utils/database';
-import { v4 as uuidv4 } from 'uuid';
+import { randomUUID } from 'crypto';
 
 const router = express.Router();
 
@@ -244,7 +244,7 @@ router.post('/', [
       tags = []
     } = req.body;
 
-    const id = uuidv4();
+    const id = randomUUID();
 
     await runAsync(
       `INSERT INTO ideas (
@@ -370,7 +370,7 @@ router.post('/:id/resources', [
     const { id } = req.params;
     const { type, url, title, description } = req.body;
 
-    const resourceId = uuidv4();
+    const resourceId = randomUUID();
     await runAsync(
       `INSERT INTO idea_resources (id, idea_id, type, url, title, description) VALUES (?, ?, ?, ?, ?, ?)`,
       [resourceId, id, type, url, title, description]
@@ -416,7 +416,7 @@ router.post('/:id/notes', [
     const { id } = req.params;
     const { content, type = 'general' } = req.body;
 
-    const noteId = uuidv4();
+    const noteId = randomUUID();
     await runAsync(
       `INSERT INTO idea_notes (id, idea_id, content, type) VALUES (?, ?, ?, ?)`,
       [noteId, id, content, type]

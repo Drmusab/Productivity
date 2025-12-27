@@ -6,7 +6,7 @@
  */
 
 import { allAsync, getAsync, runAsync } from '../utils/database';
-import { v4 as uuidv4 } from 'uuid';
+import { randomUUID } from 'crypto';
 
 /**
  * Vault item types - unified representation of all knowledge entities
@@ -172,7 +172,7 @@ export class KnowledgeVaultService {
    * Create a new vault item
    */
   static async createVaultItem(data: Partial<VaultItem> & { type: VaultItemType; title: string; created_by: number }): Promise<VaultItem> {
-    const id = data.id || uuidv4();
+    const id = data.id || randomUUID();
     const now = new Date().toISOString();
 
     await runAsync(
@@ -274,7 +274,7 @@ export class KnowledgeVaultService {
    * Create a link between two vault items
    */
   static async createVaultLink(sourceId: string, targetId: string, linkType: VaultLink['link_type'] = 'reference'): Promise<VaultLink> {
-    const id = uuidv4();
+    const id = randomUUID();
     const now = new Date().toISOString();
 
     await runAsync(

@@ -8,7 +8,7 @@
 import express from 'express';
 import { body, validationResult, param } from 'express-validator';
 import { runAsync, allAsync, getAsync } from '../utils/database';
-import { v4 as uuidv4 } from 'uuid';
+import { randomUUID } from 'crypto';
 
 const router = express.Router();
 
@@ -191,7 +191,7 @@ router.post('/', [
 
   try {
     const { content, category, source, related_to, priority = 'medium' } = req.body;
-    const id = uuidv4();
+    const id = randomUUID();
 
     await runAsync(
       `INSERT INTO thoughts (id, content, category, source, related_to, priority) VALUES (?, ?, ?, ?, ?, ?)`,
@@ -274,7 +274,7 @@ router.post('/brain-dump', [
     const { content, sessionTitle } = req.body;
     
     // Create a session
-    const sessionId = uuidv4();
+    const sessionId = randomUUID();
     await runAsync(
       `INSERT INTO thought_sessions (id, title, type) VALUES (?, ?, 'brain_dump')`,
       [sessionId, sessionTitle || `Brain Dump ${new Date().toLocaleDateString()}`]
@@ -285,7 +285,7 @@ router.post('/brain-dump', [
     const thoughts = [];
 
     for (let i = 0; i < lines.length; i++) {
-      const thoughtId = uuidv4();
+      const thoughtId = randomUUID();
       await runAsync(
         `INSERT INTO thoughts (id, content, category) VALUES (?, ?, 'facts')`,
         [thoughtId, lines[i].trim(), 'facts']
@@ -293,7 +293,7 @@ router.post('/brain-dump', [
       
       await runAsync(
         `INSERT INTO thought_session_items (id, session_id, thought_id, position) VALUES (?, ?, ?, ?)`,
-        [uuidv4(), sessionId, thoughtId, i]
+        [randomUUID(), sessionId, thoughtId, i]
       );
       
       thoughts.push({ id: thoughtId, content: lines[i].trim() });
