@@ -1,14 +1,25 @@
 {
-  "name": "kanban-backend",
+  "name": "@productivity-os/backend",
   "version": "1.0.0",
-  "description": "Kanban task management backend",
+  "description": "Productivity OS backend API server",
   "main": "dist/app.js",
   "scripts": {
     "start": "node dist/app.js",
     "dev": "ts-node-dev --respawn --transpile-only src/app.ts",
     "build": "tsc",
     "test": "jest",
-    "migrate": "ts-node src/utils/migrate.ts"
+    "migrate": "ts-node ../../scripts/migrate.ts",
+    "migrate:status": "ts-node ../../scripts/migrate.ts status",
+    "migrate:rollback": "ts-node ../../scripts/migrate.ts rollback",
+    "backup": "ts-node ../../scripts/backup.ts",
+    "backup:vault": "ts-node ../../scripts/backup.ts vault",
+    "backup:db": "ts-node ../../scripts/backup.ts db",
+    "backup:list": "ts-node ../../scripts/backup.ts list",
+    "restore": "ts-node ../../scripts/backup.ts restore",
+    "seed": "ts-node ../../scripts/seed.ts",
+    "seed:minimal": "ts-node ../../scripts/seed.ts minimal",
+    "seed:clear": "ts-node ../../scripts/seed.ts clear",
+    "worker": "ts-node src/worker.ts"
   },
   "dependencies": {
     "@types/cookie-parser": "^1.4.10",

@@ -1,38 +1,101 @@
-# Local-First AI-Integrated Task Manager
+# Productivity OS
 
-A comprehensive, professional-grade Kanban-style task management web application with **AI integration** and **advanced n8n automation**. Designed to run locally on your PC, this application provides an intuitive, responsive interface for managing tasks with natural language commands, automated reporting, and intelligent notifications.
+An Obsidian-style productivity platform combining note-taking, task management, and productivity modules into a cohesive workspace. Built with TypeScript end-to-end, Docker-first architecture, and offline-first design.
 
-Built with a modern tech stack featuring React, Node.js, Express, and SQLite.
+> **Note**: This is a refactored version of the AI-Integrated Task Manager, restructured as a unified "Productivity OS" with proper monorepo organization.
+
+---
+
+## 🚀 Quick Start
+
+### Prerequisites
+- Docker 20.10+ and Docker Compose
+- Node.js 18+ (for local development)
+
+### Development Mode
+
+```bash
+# Clone the repository
+git clone https://github.com/Drmusab/AI-Integrated-Task-Manager.git
+cd AI-Integrated-Task-Manager
+
+# Copy environment file
+cp .env.example .env
+
+# Start development environment
+docker compose --profile dev up
+
+# Access the application
+# Frontend: http://localhost:3000
+# Backend:  http://localhost:3001
+```
+
+### Production Mode
+
+```bash
+# Start production environment
+docker compose --profile prod up -d
+
+# Check status
+docker compose ps
+```
+
+---
+
+## 📁 Project Structure
+
+```
+productivity-os/
+├── apps/
+│   ├── desktop/          # React frontend (Electron-ready)
+│   └── backend/          # Node.js API server
+├── packages/
+│   └── shared/           # Shared TypeScript types
+├── infra/
+│   └── docker/           # Docker configuration
+├── scripts/              # CLI utilities (migrate, backup, seed)
+├── docs/                 # Documentation
+└── docker-compose.yml    # Root compose file
+```
 
 ---
 
 ## 📑 Table of Contents
 
 - [Features](#features)
-- [AI Integration](#ai-integration)
+- [Architecture](#architecture)
 - [Technology Stack](#technology-stack)
-- [System Requirements](#system-requirements)
 - [Installation](#installation)
-  - [Quick Start with Docker](#quick-start-with-docker)
-  - [Development Installation](#development-installation)
 - [Configuration](#configuration)
-- [User Guide](#user-guide)
-  - [Getting Started](#getting-started-1)
-  - [Managing Boards](#managing-boards)
-  - [Working with Tasks](#working-with-tasks)
-  - [AI Commands](#ai-commands)
-  - [Automation & Integrations](#automation--integrations)
-  - [Analytics & Reporting](#analytics--reporting)
-- [API Documentation](#api-documentation)
-- [Code Documentation](#code-documentation)
+- [Update & Backup](#update--backup)
 - [Development Guide](#development-guide)
+- [API Documentation](#api-documentation)
 - [Troubleshooting](#troubleshooting)
 - [Contributing](#contributing)
-- [License](#license)
 
 ---
 
 ## Features
+
+### Vault System (Obsidian-style)
+- **Wiki-links**: `[[Note Title]]` syntax for linking notes
+- **Backlinks Panel**: See all notes that reference the current note
+- **Unresolved Links**: Track missing notes that should be created
+- **Daily Notes**: Auto-generated notes with customizable templates
+- **Graph Intelligence**: Query note relationships without visualization
+
+### Block-Based Editor (Notion-style)
+- **Block Types**: Paragraph, heading, todo, list, quote, code, callout, embed
+- **Nested Blocks**: Full tree structure with parent-child relationships
+- **Drag & Drop**: Reorder blocks within and across notes
+- **Block → Note Linking**: Reference specific blocks in other notes
+
+### Productivity Modules
+- **Kanban Boards**: Full-featured task management
+- **Pomodoro Focus**: Configurable work/break cycles with session logging
+- **Thought Organizer**: Brain dump with categorization (Facts, Interpretations, Emotions, Assumptions, Actions, Questions)
+- **P.A.R.A. Method**: Projects, Areas, Resources, Archive organization
+- **Time Blocking**: Schedule-based productivity tracking
 
 ### Core Kanban Features
 - **Customizable Boards**: Create unlimited boards with custom names and descriptions
@@ -1452,6 +1515,68 @@ If you encounter issues not covered here:
    - Steps to reproduce
    - Error messages/logs
    - System information
+
+---
+
+## Update & Backup
+
+### Updating to a New Version
+
+```bash
+# 1. Create a backup first
+npm run backup
+
+# 2. Pull latest changes
+git pull origin main
+
+# 3. Rebuild containers
+docker compose --profile prod build --no-cache
+
+# 4. Run migrations
+docker compose --profile prod up -d
+docker compose exec api-prod npm run migrate
+
+# 5. Verify everything works
+docker compose ps
+```
+
+### Backup Commands
+
+```bash
+# Full backup (database + vault)
+npm run backup
+
+# List available backups
+npm run backup:list
+
+# Restore from backup
+npm run restore backups/backup-YYYYMMDD-HHMMSS.tar.gz
+```
+
+### Rollback
+
+```bash
+# Rollback last migration
+npm run migrate:rollback
+
+# Restore from backup
+npm run restore backups/<backup-file>.tar.gz
+```
+
+For detailed update and backup procedures, see [docs/UPDATE_GUIDE.md](./docs/UPDATE_GUIDE.md).
+
+---
+
+## Architecture
+
+The application follows a monorepo structure with clear separation:
+
+- **apps/desktop**: React frontend (Electron-ready)
+- **apps/backend**: Node.js + Express + TypeScript API
+- **packages/shared**: Shared TypeScript types and utilities
+- **infra/docker**: Docker configuration with dev/prod profiles
+
+For detailed architecture documentation, see [docs/ARCHITECTURE.md](./docs/ARCHITECTURE.md).
 
 ---
 

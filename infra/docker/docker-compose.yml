@@ -1,0 +1,190 @@
+# Productivity OS - Docker Compose Configuration
+# Usage:
+#   Development: docker compose --profile dev up
+#   Production:  docker compose --profile prod up -d
+#
+# Environment: Copy .env.example to .env and configure
+
+x-common-env: &common-env
+  APP_VERSION: ${APP_VERSION:-1.0.0}
+  NODE_ENV: ${NODE_ENV:-development}
+  JWT_SECRET: ${JWT_SECRET:-your-secret-key-here}
+
+services:
+  # ===== Development Services =====
+  
+  api-dev:
+    build:
+      context: ../..
+      dockerfile: infra/docker/Dockerfile.backend.dev
+    container_name: productivity-os-api-dev
+    profiles:
+      - dev
+    ports:
+      - "3001:3001"
+    volumes:
+      - ../../apps/backend/src:/app/src:ro
+      - vault_data:/app/data
+      - app_config:/app/config
+      - attachments:/app/attachments
+      - backups:/app/backups
+    environment:
+      <<: *common-env
+      NODE_ENV: development
+      PORT: 3001
+      FRONTEND_URL: http://localhost:3000
+      DATABASE_PATH: /app/data/productivity.db
+      N8N_API_KEY: ${N8N_API_KEY:-}
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3001/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+
+  app-dev:
+    build:
+      context: ../..
+      dockerfile: infra/docker/Dockerfile.desktop.dev
+    container_name: productivity-os-app-dev
+    profiles:
+      - dev
+    ports:
+      - "3000:3000"
+    volumes:
+      - ../../apps/desktop/src:/app/src:ro
+      - ../../apps/desktop/public:/app/public:ro
+    environment:
+      REACT_APP_API_URL: http://localhost:3001
+      CHOKIDAR_USEPOLLING: "true"
+      WATCHPACK_POLLING: "true"
+    depends_on:
+      api-dev:
+        condition: service_healthy
+    restart: unless-stopped
+
+  # ===== Production Services =====
+  
+  api-prod:
+    build:
+      context: ../..
+      dockerfile: infra/docker/Dockerfile.backend.prod
+    container_name: productivity-os-api
+    profiles:
+      - prod
+    ports:
+      - "3001:3001"
+    volumes:
+      - vault_data:/app/data
+      - app_config:/app/config
+      - attachments:/app/attachments
+      - backups:/app/backups
+    environment:
+      <<: *common-env
+      NODE_ENV: production
+      PORT: 3001
+      FRONTEND_URL: http://localhost:3000
+      DATABASE_PATH: /app/data/productivity.db
+      N8N_API_KEY: ${N8N_API_KEY:-}
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3001/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 5s
+
+  app-prod:
+    build:
+      context: ../..
+      dockerfile: infra/docker/Dockerfile.desktop.prod
+    container_name: productivity-os-app
+    profiles:
+      - prod
+    ports:
+      - "3000:3000"
+    environment:
+      REACT_APP_API_URL: http://localhost:3001
+    depends_on:
+      api-prod:
+        condition: service_healthy
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3000/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 5s
+
+  # ===== Optional Worker Service =====
+  
+  worker-dev:
+    build:
+      context: ../..
+      dockerfile: infra/docker/Dockerfile.backend.dev
+    container_name: productivity-os-worker-dev
+    profiles:
+      - dev
+      - worker
+    volumes:
+      - ../../apps/backend/src:/app/src:ro
+      - vault_data:/app/data
+    environment:
+      <<: *common-env
+      NODE_ENV: development
+      WORKER_MODE: "true"
+      DATABASE_PATH: /app/data/productivity.db
+    command: ["npm", "run", "worker"]
+    depends_on:
+      api-dev:
+        condition: service_healthy
+    restart: unless-stopped
+
+  worker-prod:
+    build:
+      context: ../..
+      dockerfile: infra/docker/Dockerfile.backend.prod
+    container_name: productivity-os-worker
+    profiles:
+      - prod
+      - worker
+    volumes:
+      - vault_data:/app/data
+    environment:
+      <<: *common-env
+      NODE_ENV: production
+      WORKER_MODE: "true"
+      DATABASE_PATH: /app/data/productivity.db
+    command: ["node", "dist/worker.js"]
+    depends_on:
+      api-prod:
+        condition: service_healthy
+    restart: unless-stopped
+
+# ===== Volumes =====
+volumes:
+  # Primary vault storage for notes, markdown files, and indexes
+  vault_data:
+    name: productivity-os-vault
+    driver: local
+
+  # Application configuration (settings, templates, etc.)
+  app_config:
+    name: productivity-os-config
+    driver: local
+
+  # File attachments storage
+  attachments:
+    name: productivity-os-attachments
+    driver: local
+
+  # Backup storage
+  backups:
+    name: productivity-os-backups
+    driver: local
+
+# ===== Networks =====
+networks:
+  default:
+    name: productivity-os-network

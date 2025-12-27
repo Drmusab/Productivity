@@ -1,0 +1,35 @@
+# Desktop App Development Dockerfile
+FROM node:18-alpine
+
+WORKDIR /app
+
+# Install dependencies for Electron and native modules
+RUN apk add --no-cache \
+    chromium \
+    nss \
+    freetype \
+    harfbuzz \
+    ca-certificates \
+    ttf-freefont \
+    python3 \
+    make \
+    g++
+
+# Set environment for Puppeteer/Electron
+ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true \
+    PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium-browser
+
+# Copy package files
+COPY apps/desktop/package*.json ./
+
+# Install dependencies
+RUN npm install
+
+# Copy source code
+COPY apps/desktop/ .
+
+# Expose port for React dev server
+EXPOSE 3000
+
+# Start development server
+CMD ["npm", "start"]

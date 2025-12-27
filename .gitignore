@@ -1,10 +1,66 @@
+# Dependencies
 node_modules/
+**/node_modules/
+
+# Build outputs
+dist/
+build/
+**/dist/
+**/build/
+
+# Data and database files
+data/
+*.db
+*.db-journal
+*.db-shm
+*.db-wal
+
+# Backup files
+backups/
+*.backup
+*.bak
+*.tar.gz
+
+# Environment files
+.env
+.env.local
+.env.*.local
+
+# IDE and editor files
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+
+# Coverage
+coverage/
+
+# Electron specific
+out/
+*.asar
+
+# Temporary files
+tmp/
+temp/
+
+# Attachments (user data)
+attachments/
+
+# Package lock files (optional - uncomment if needed)
+# package-lock.json
+
+# Legacy paths (for compatibility)
 backend/node_modules/
-frontend/node_modules/
 backend/data/
 backend/dist/
+frontend/node_modules/
 frontend/build/
 n8n/dist/
 n8n/node_modules/
-*.backup
-*.bak

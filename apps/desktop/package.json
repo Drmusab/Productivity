@@ -1,7 +1,7 @@
 {
-  "name": "kanban-frontend",
+  "name": "@productivity-os/desktop",
   "version": "1.0.0",
-  "description": "Kanban task management frontend",
+  "description": "Productivity OS desktop application (React frontend, Electron-ready)",
   "private": true,
   "dependencies": {
     "@emotion/react": "^11.11.1",
@@ -66,7 +66,7 @@
       "last 1 safari version"
     ]
   },
-  "proxy": "http://backend:3001",
+  "proxy": "http://api-dev:3001",
   "devDependencies": {
     "@testing-library/dom": "^10.4.1",
     "@testing-library/jest-dom": "^6.9.1",

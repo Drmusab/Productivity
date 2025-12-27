@@ -1,0 +1,25 @@
+# Backend Development Dockerfile
+FROM node:18-alpine
+
+WORKDIR /app
+
+# Install build dependencies
+RUN apk add --no-cache python3 make g++ sqlite
+
+# Copy package files
+COPY apps/backend/package*.json ./
+
+# Install all dependencies (including devDependencies)
+RUN npm install
+
+# Copy source code
+COPY apps/backend/ .
+
+# Create data directories
+RUN mkdir -p data attachments backups
+
+# Expose port
+EXPOSE 3001
+
+# Start with hot reload
+CMD ["npm", "run", "dev"]

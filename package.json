@@ -1,0 +1,47 @@
+{
+  "name": "productivity-os",
+  "version": "1.0.0",
+  "description": "Obsidian-style Productivity OS - unified note-taking and task management",
+  "private": true,
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev": "docker compose --profile dev up",
+    "prod": "docker compose --profile prod up -d",
+    "stop": "docker compose down",
+    "build": "npm run build --workspaces",
+    "test": "npm run test --workspaces",
+    "migrate": "cd apps/backend && npm run migrate",
+    "migrate:status": "cd apps/backend && npm run migrate:status",
+    "migrate:rollback": "cd apps/backend && npm run migrate:rollback",
+    "backup": "cd apps/backend && npm run backup",
+    "backup:vault": "cd apps/backend && npm run backup:vault",
+    "backup:db": "cd apps/backend && npm run backup:db",
+    "backup:list": "cd apps/backend && npm run backup:list",
+    "restore": "cd apps/backend && npm run restore",
+    "seed": "cd apps/backend && npm run seed",
+    "seed:minimal": "cd apps/backend && npm run seed:minimal",
+    "clean": "rm -rf node_modules apps/*/node_modules packages/*/node_modules"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "keywords": [
+    "productivity",
+    "notes",
+    "tasks",
+    "kanban",
+    "obsidian",
+    "notion",
+    "pomodoro",
+    "para"
+  ],
+  "author": "Drmusab",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Drmusab/AI-Integrated-Task-Manager.git"
+  }
+}
