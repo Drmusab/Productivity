@@ -4,6 +4,7 @@ import {  triggerAutomation  } from './automation';
 import {  sendTaskDueNotification, sendRoutineReminder  } from './notifications';
 import {  createRecurringTask  } from './tasks';
 import {  generateWeeklyReport, sendReportToN8n  } from './reporting';
+import { parseRecurringRule } from '../utils/recurringRule';
 
 // Time constants
 const MILLISECONDS_PER_MINUTE = 60 * 1000;
@@ -83,7 +84,7 @@ const startScheduler = () => {
           for (const task of tasks) {
             try {
               const taskAny: any = task;
-              const recurringRule = JSON.parse(taskAny.recurring_rule);
+              const recurringRule = parseRecurringRule(taskAny.recurring_rule);
               const lastDueDate = new Date(taskAny.due_date);
 
               // Check if we need to create a new instance of this recurring task
@@ -233,20 +234,6 @@ const calculateNextDueDate = (lastDueDate, recurringRule) => {
   }
 
   return nextDueDate;
-};
-
-const parseRecurringRule = (ruleString) => {
-  try {
-    const parsed = typeof ruleString === 'string' ? JSON.parse(ruleString) : (ruleString || {});
-    return {
-      interval: parsed.interval || 1,
-      notificationLeadTime: parsed.notificationLeadTime || 60,
-      status: parsed.status || 'active',
-      ...parsed,
-    };
-  } catch (error) {
-    return { interval: 1, notificationLeadTime: 60, status: 'active' };
-  }
 };
 
 export { startScheduler };

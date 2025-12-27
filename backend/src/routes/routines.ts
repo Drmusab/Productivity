@@ -2,6 +2,7 @@
 import express from 'express';
 import {  body, validationResult, param  } from 'express-validator';
 import {  runAsync, allAsync, getAsync  } from '../utils/database';
+import { parseRecurringRule } from '../utils/recurringRule';
 
 const router = express.Router();
 
@@ -68,7 +69,7 @@ router.get('/', async (req, res) => {
     );
 
     const parsed = routines.map(task => {
-      const recurringRule = safeParseRule(task.recurring_rule);
+      const recurringRule = parseRecurringRule(task.recurring_rule);
 
       return {
         id: task.id,
@@ -115,7 +116,7 @@ router.put('/:id', [param('id').isInt(), ...recurringRuleSchema], async (req, re
       endDate,
       notificationLeadTime,
       status,
-      lastNotificationAt: safeParseRule(existingTask.recurring_rule).lastNotificationAt || null,
+      lastNotificationAt: parseRecurringRule(existingTask.recurring_rule).lastNotificationAt || null,
     };
 
     await runAsync(
@@ -147,7 +148,7 @@ router.patch('/:id/status', [param('id').isInt(), body('status').isIn(['active',
       return res.status(404).json({ error: 'Routine not found' });
     }
 
-    const recurringRule = safeParseRule(existingTask.recurring_rule);
+    const recurringRule = parseRecurringRule(existingTask.recurring_rule);
     recurringRule.status = status;
 
     await runAsync(
@@ -183,19 +184,5 @@ router.delete('/:id', [param('id').isInt()], async (req, res) => {
     res.status(500).json({ error: 'Unable to delete routine' });
   }
 });
-
-const safeParseRule = (ruleString) => {
-  try {
-    const parsed = typeof ruleString === 'string' ? JSON.parse(ruleString) : (ruleString || {});
-    return {
-      notificationLeadTime: parsed.notificationLeadTime || 60,
-      status: parsed.status || 'active',
-      interval: parsed.interval || 1,
-      ...parsed,
-    };
-  } catch (error) {
-    return { frequency: 'daily', interval: 1, notificationLeadTime: 60, status: 'active' };
-  }
-};
 
 export = router;
