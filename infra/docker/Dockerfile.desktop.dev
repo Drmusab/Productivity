@@ -22,8 +22,16 @@ ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true \
 # Copy package files
 COPY apps/desktop/package*.json ./
 
-# Install dependencies
-RUN npm install
+# Harden npm for deterministic installs and avoid stale cache artifacts
+RUN npm config set registry https://registry.npmjs.org/ \
+    && npm config set fetch-retries 5 \
+    && npm config set fetch-retry-mintimeout 10000 \
+    && npm config set fetch-retry-maxtimeout 60000 \
+    && npm config set prefer-offline false \
+    && npm config set cache /tmp/npm-cache --global
+
+# Install dependencies using the lockfile to surface real inconsistencies
+RUN npm ci --no-audit --no-fund
 
 # Copy source code
 COPY apps/desktop/ .
