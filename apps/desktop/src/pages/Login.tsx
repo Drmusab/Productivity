@@ -49,8 +49,7 @@ const Login = () => {
     }
 
     navigate('/boards');
-
-    setLoading(false);
+    // Don't set loading to false - let the component unmount during navigation
   };
 
   const features = [
