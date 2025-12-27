@@ -12,6 +12,7 @@
  */
 
 import { existsSync, readdirSync, readFileSync } from 'fs';
+import { createHash } from 'crypto';
 import path from 'path';
 
 // Configuration
@@ -79,16 +80,10 @@ async function getAppliedMigrations(db: any): Promise<MigrationRecord[]> {
 }
 
 /**
- * Calculate a simple checksum for migration content
+ * Calculate a SHA-256 checksum for migration content
  */
 function calculateChecksum(content: string): string {
-  let hash = 0;
-  for (let i = 0; i < content.length; i++) {
-    const char = content.charCodeAt(i);
-    hash = ((hash << 5) - hash) + char;
-    hash = hash & hash;
-  }
-  return hash.toString(16);
+  return createHash('sha256').update(content).digest('hex').substring(0, 16);
 }
 
 /**
