@@ -87,13 +87,13 @@ export class NoteService {
    * @returns Note or null if not found
    */
   async getNote(noteId: string): Promise<Note | null> {
-    const row = await getAsync('SELECT * FROM obsidian_notes WHERE id = ?', [noteId]);
+    const row = await getAsync<NoteRow>('SELECT * FROM obsidian_notes WHERE id = ?', [noteId]);
     
     if (!row) {
       return null;
     }
     
-    return this.rowToNote(row as NoteRow);
+    return this.rowToNote(row);
   }
   
   /**
@@ -105,11 +105,11 @@ export class NoteService {
   async getNoteByTitle(title: string): Promise<Note | null> {
     // Get all obsidian_notes and find by normalized title
     // SQLite doesn't have great case-insensitive support for all scenarios
-    const rows = await allAsync('SELECT * FROM obsidian_notes');
+    const rows = await allAsync<NoteRow>('SELECT * FROM obsidian_notes');
     
     for (const row of rows) {
       if (normalizeNoteTitle(row.title) === normalizeNoteTitle(title)) {
-        return this.rowToNote(row as NoteRow);
+        return this.rowToNote(row);
       }
     }
     
@@ -213,7 +213,7 @@ export class NoteService {
    */
   async deleteNote(noteId: string): Promise<void> {
     // Mark incoming links as unresolved
-    const incomingLinks = await allAsync(
+    const incomingLinks = await allAsync<NoteLinkRow>(
       'SELECT * FROM obsidian_note_links WHERE target_note_id = ?',
       [noteId]
     );
@@ -611,13 +611,13 @@ export class NoteService {
     }
     
     // Find all unresolved links that match this note's title
-    const unresolvedLinks = await allAsync(
+    const unresolvedLinks = await allAsync<NoteLinkRow>(
       `SELECT * FROM obsidian_note_links 
        WHERE target_note_id IS NULL 
        AND unresolved_target IS NOT NULL`
     );
     
-    for (const link of unresolvedLinks as NoteLinkRow[]) {
+    for (const link of unresolvedLinks) {
       if (link.unresolved_target && normalizeNoteTitle(link.unresolved_target) === normalizeNoteTitle(note.title)) {
         // Resolve the link
         await runAsync(
