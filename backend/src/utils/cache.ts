@@ -128,17 +128,6 @@ class Cache {
   }
 }
 
-/**
- * Start periodic cache cleanup
- * Note: The default cache implementation doesn't need periodic cleanup
- * as it uses setTimeout for automatic cleanup. This is kept for compatibility.
- */
-export function startCacheCleanup(intervalMs: number = 60000): NodeJS.Timeout {
-  return setInterval(() => {
-    // Placeholder - cache auto-cleans via setTimeout
-  }, intervalMs);
-}
-
 // Export singleton instance with configurable default TTL
 const defaultTTL = process.env.CACHE_TTL ? parseInt(process.env.CACHE_TTL) : 300000;
 const cache = new Cache(defaultTTL);

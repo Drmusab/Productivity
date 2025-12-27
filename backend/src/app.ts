@@ -51,7 +51,6 @@ import { CollaborationServer } from './services/collaborationServer';
 import { csrfProtection } from './middleware/csrf';
 import { sanitizeRequest } from './middleware/sanitization';
 import { rateLimiters } from './middleware/rateLimiter';
-import { startCacheCleanup } from './utils/cache';
 
 /** Express application instance */
 const app: Application = express();
@@ -245,9 +244,6 @@ if (process.env.NODE_ENV !== 'test') {
     
     // Initialize collaboration server
     const collaborationServer = new CollaborationServer(httpServer);
-    
-    // Start cache cleanup (every minute)
-    startCacheCleanup(60000);
     
     httpServer.listen(PORT, () => {
       logger.info(`Server running on port ${PORT}`);
