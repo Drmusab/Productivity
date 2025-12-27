@@ -37,6 +37,7 @@ import {
   deleteSwimlane
 } from '../services/boardService';
 import { useNotification } from '../contexts/NotificationContext';
+import { useAuth } from '../contexts/AuthContext';
 import TaskCard from '../components/TaskCard';
 import TaskDialog from '../components/TaskDialog';
 import ColumnDialog from '../components/ColumnDialog';
@@ -48,9 +49,13 @@ import {
   reorderTasksAfterMove
 } from '../utils/boardUtils';
 
+// Default user ID for system operations when user is not authenticated
+const DEFAULT_USER_ID = 1;
+
 const Board = () => {
   const { id } = useParams();
   const { showSuccess, showError } = useNotification();
+  const { user } = useAuth();
   
   const [board, setBoard] = useState(null);
   const [tasks, setTasks] = useState([]);
@@ -386,7 +391,7 @@ const Board = () => {
 
   const handleDeleteTask = async (taskId) => {
     try {
-      const deletedBy = 1; // TODO: Get current user ID from auth context
+      const deletedBy = user?.id || DEFAULT_USER_ID;
       await deleteTask(taskId, deletedBy);
       showSuccess('تم حذف المهمة بنجاح');
       

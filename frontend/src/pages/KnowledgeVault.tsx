@@ -19,16 +19,11 @@ import {
   Paper,
   Select,
   Stack,
-  Tab,
-  Tabs,
   TextField,
-  Tooltip,
   Typography,
   LinearProgress,
   ToggleButtonGroup,
   ToggleButton,
-  Breadcrumbs,
-  Link,
 } from '@mui/material';
 import {
   Add,
@@ -40,9 +35,7 @@ import {
   FormatQuote,
   Spellcheck,
   Delete,
-  Link as LinkIcon,
   Folder,
-  FolderOpen,
   Search,
   ViewModule,
   ViewList,
@@ -57,13 +50,8 @@ import {
 import { useNotification } from '../contexts/NotificationContext';
 import {
   getVaultItems,
-  getVaultItem,
   createVaultItem,
-  updateVaultItem,
   deleteVaultItem,
-  createVaultLink,
-  getVaultLinks,
-  searchVault,
   getVaultStats,
   migrateToVault,
   VaultItem,
@@ -71,7 +59,7 @@ import {
 } from '../services/vaultService';
 
 // PARA categories configuration
-const PARA_CONFIG = {
+const PARA_CONFIG: Record<string, { label: string; icon: React.ReactElement; color: string; description: string }> = {
   project: { label: 'Projects', icon: <Work />, color: '#3498db', description: 'Short-term goals with deadlines' },
   area: { label: 'Areas', icon: <Category />, color: '#9b59b6', description: 'Long-term responsibilities' },
   resource: { label: 'Resources', icon: <LibraryBooks />, color: '#2ecc71', description: 'Reference materials' },
@@ -79,7 +67,7 @@ const PARA_CONFIG = {
 };
 
 // Vault item type configuration
-const TYPE_CONFIG = {
+const TYPE_CONFIG: Record<string, { label: string; icon: React.ReactElement; color: string }> = {
   note: { label: 'Notes', icon: <Note />, color: '#3498db' },
   thought: { label: 'Thoughts', icon: <Psychology />, color: '#9b59b6' },
   thought_session: { label: 'Thought Sessions', icon: <Psychology />, color: '#8e44ad' },
