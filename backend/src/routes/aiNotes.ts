@@ -236,12 +236,11 @@ router.post(
       recordTaskHistory(taskId, 'created', null, null, null);
       emitEvent('task', 'created', { taskId, columnId });
 
-      // Create task-note relation with 'derived' type
-      // Note: TaskNoteRelationType doesn't have 'derived', so we'll use 'reference'
+      // Create task-note relation with 'derived' type for AI-generated tasks
       await noteService.createTaskNoteRelation({
         taskId,
         noteId: sourceNoteId,
-        relationType: TaskNoteRelationType.REFERENCE,
+        relationType: TaskNoteRelationType.DERIVED,
       });
 
       return res.json({

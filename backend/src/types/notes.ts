@@ -137,6 +137,9 @@ export enum TaskNoteRelationType {
   
   /** Note contains evidence of task completion */
   EVIDENCE = 'evidence',
+  
+  /** Task was derived/extracted from note content by AI */
+  DERIVED = 'derived',
 }
 
 /**
