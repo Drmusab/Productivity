@@ -124,6 +124,7 @@ Shared React components:
 Productivity feature modules:
 - **Kanban**: Board and column management
 - **Pomodoro**: Focus timer with session tracking
+- **iTasks**: Task management with Eisenhower Matrix integration
 - **Calendar**: (Coming soon)
 - **PARA**: (Coming soon)
 
@@ -154,6 +155,7 @@ Productivity feature modules:
 ### Productivity Modules
 - ✅ **Kanban Boards**: Visual task management
 - ✅ **Pomodoro Timer**: Focus sessions with tracking
+- ✅ **iTasks**: Task management with Eisenhower Matrix (urgent/important prioritization)
 - ⏳ **Calendar Integration**: (In progress)
 - ⏳ **PARA Method**: (In progress)
 - ⏳ **Time Blocking**: (Planned)
@@ -165,6 +167,7 @@ Productivity feature modules:
 - **[Architecture Guide](./docs/ARCHITECTURE.md)**: System design and data flow
 - **[Development Guide](./docs/DEVELOPMENT_GUIDE.md)**: Setup and coding standards
 - **[API Documentation](./docs/CODE_DOCUMENTATION.md)**: Complete API reference
+- **[iTasks Integration](./docs/ITASKS_INTEGRATION.md)**: iTasks module integration guide
 
 ---
 
@@ -201,6 +204,7 @@ Productivity feature modules:
 ### Productivity Modules
 - **Kanban Boards**: Full-featured task management
 - **Pomodoro Focus**: Configurable work/break cycles with session logging
+- **iTasks**: Task management with Eisenhower Matrix (Do First, Schedule, Delegate, Eliminate)
 - **Thought Organizer**: Brain dump with categorization (Facts, Interpretations, Emotions, Assumptions, Actions, Questions)
 - **P.A.R.A. Method**: Projects, Areas, Resources, Archive organization
 - **Time Blocking**: Schedule-based productivity tracking
