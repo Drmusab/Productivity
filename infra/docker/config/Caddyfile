@@ -1,0 +1,60 @@
+# Productivity OS - Caddy Reverse Proxy Configuration
+# Routes traffic to appropriate services
+
+{
+    # Global options
+    admin off
+    auto_https off
+}
+
+# Main productivity OS routing
+:80 {
+    # Productivity OS frontend (default)
+    handle / {
+        reverse_proxy app-prod:3000
+    }
+
+    # Plane web interface
+    handle /plane* {
+        reverse_proxy plane-web:3000
+    }
+
+    # Plane API
+    handle /api/v1/* {
+        reverse_proxy plane-api:8000
+    }
+
+    # Plane public spaces
+    handle /spaces/* {
+        reverse_proxy plane-space:3000
+    }
+
+    # Plane WebSocket (real-time collaboration)
+    handle /live/* {
+        reverse_proxy plane-live:3000
+    }
+
+    # Auth Bridge endpoints
+    handle /auth/* {
+        reverse_proxy auth-bridge:4000
+    }
+
+    # Data Bridge webhooks
+    handle /webhooks/* {
+        reverse_proxy data-bridge:4001
+    }
+
+    # Productivity OS API (fallback)
+    handle /api/* {
+        reverse_proxy api-prod:3001
+    }
+
+    # Enable compression
+    encode gzip
+
+    # Logging
+    log {
+        output stdout
+        format console
+    }
+}
