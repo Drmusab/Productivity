@@ -1,0 +1,320 @@
+# Plane Integration - Docker Compose Configuration
+# This file extends the main docker-compose.yml with Plane services
+# Usage: docker compose --profile plane up
+
+x-plane-env: &plane-env
+  PLANE_SECRET_KEY: ${PLANE_SECRET_KEY:-change-this-to-random-secret}
+  DATABASE_URL: postgresql://${POSTGRES_USER:-productivity}:${POSTGRES_PASSWORD:-change-this-password}@productivity-postgres:5432/plane
+  REDIS_URL: redis://productivity-redis:6379/
+  RABBITMQ_DEFAULT_VHOST: ${RABBITMQ_VHOST:-plane}
+  RABBITMQ_DEFAULT_USER: ${RABBITMQ_USER:-plane}
+  RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASSWORD:-change-this-password}
+  RABBITMQ_HOST: productivity-mq
+  AWS_ACCESS_KEY_ID: ${MINIO_ACCESS_KEY:-minioadmin}
+  AWS_SECRET_ACCESS_KEY: ${MINIO_SECRET_KEY:-minioadmin}
+  AWS_S3_ENDPOINT_URL: http://productivity-minio:9000
+  AWS_S3_BUCKET_NAME: plane-uploads
+  FILE_SIZE_LIMIT: 5242880
+  WEB_URL: ${PLANE_WEB_URL:-http://localhost/plane}
+  CORS_ALLOWED_ORIGINS: ${FRONTEND_URL:-http://localhost:3000},http://localhost
+
+services:
+  # ===== Infrastructure Services =====
+  
+  productivity-postgres:
+    image: postgres:15.7-alpine
+    container_name: productivity-postgres
+    profiles:
+      - plane
+      - prod
+      - dev
+    restart: unless-stopped
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+      - ../init-scripts/init-databases.sql:/docker-entrypoint-initdb.d/init-databases.sql:ro
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-productivity}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-change-this-password}
+      POSTGRES_DB: productivity_os
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-productivity}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - productivity-os-network
+
+  productivity-redis:
+    image: valkey/valkey:7.2-alpine
+    container_name: productivity-redis
+    profiles:
+      - plane
+      - prod
+      - dev
+    restart: unless-stopped
+    volumes:
+      - redis-data:/data
+    command: valkey-server --appendonly yes --appendfsync everysec
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "valkey-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - productivity-os-network
+
+  productivity-mq:
+    image: rabbitmq:3.13-management-alpine
+    container_name: productivity-mq
+    profiles:
+      - plane
+    restart: unless-stopped
+    volumes:
+      - rabbitmq-data:/var/lib/rabbitmq
+    environment:
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_USER:-plane}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASSWORD:-change-this-password}
+      RABBITMQ_DEFAULT_VHOST: ${RABBITMQ_VHOST:-plane}
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - productivity-os-network
+
+  productivity-minio:
+    image: minio/minio:latest
+    container_name: productivity-minio
+    profiles:
+      - plane
+    restart: unless-stopped
+    command: server /data --console-address ":9001"
+    volumes:
+      - minio-data:/data
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ACCESS_KEY:-minioadmin}
+      MINIO_ROOT_PASSWORD: ${MINIO_SECRET_KEY:-minioadmin}
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - productivity-os-network
+
+  # ===== Plane Services =====
+  
+  plane-migrator:
+    image: makeplane/plane-backend:stable
+    container_name: plane-migrator
+    profiles:
+      - plane
+    command: >
+      sh -c "python manage.py migrate"
+    environment:
+      <<: *plane-env
+    depends_on:
+      productivity-postgres:
+        condition: service_healthy
+    networks:
+      - productivity-os-network
+
+  plane-api:
+    image: makeplane/plane-backend:stable
+    container_name: plane-api
+    profiles:
+      - plane
+    restart: unless-stopped
+    command: >
+      sh -c "./bin/docker-entrypoint-api.sh"
+    ports:
+      - "8000:8000"
+    environment:
+      <<: *plane-env
+    depends_on:
+      productivity-postgres:
+        condition: service_healthy
+      productivity-redis:
+        condition: service_healthy
+      productivity-mq:
+        condition: service_healthy
+      plane-migrator:
+        condition: service_completed_successfully
+    volumes:
+      - plane-logs:/code/plane/logs
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/api/health/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    networks:
+      - productivity-os-network
+
+  plane-worker:
+    image: makeplane/plane-backend:stable
+    container_name: plane-worker
+    profiles:
+      - plane
+    restart: unless-stopped
+    command: >
+      sh -c "./bin/docker-entrypoint-worker.sh"
+    environment:
+      <<: *plane-env
+    depends_on:
+      plane-api:
+        condition: service_healthy
+    volumes:
+      - plane-logs:/code/plane/logs
+    networks:
+      - productivity-os-network
+
+  plane-beat:
+    image: makeplane/plane-backend:stable
+    container_name: plane-beat
+    profiles:
+      - plane
+    restart: unless-stopped
+    command: >
+      sh -c "./bin/docker-entrypoint-beat.sh"
+    environment:
+      <<: *plane-env
+    depends_on:
+      plane-api:
+        condition: service_healthy
+    volumes:
+      - plane-logs:/code/plane/logs
+    networks:
+      - productivity-os-network
+
+  plane-web:
+    image: makeplane/plane-frontend:stable
+    container_name: plane-web
+    profiles:
+      - plane
+    restart: unless-stopped
+    ports:
+      - "3002:3000"
+    environment:
+      NEXT_PUBLIC_API_BASE_URL: ${PLANE_API_URL:-http://localhost:8000}
+      NEXT_PUBLIC_DEPLOY_URL: ${PLANE_WEB_URL:-http://localhost/plane}
+    depends_on:
+      plane-api:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 20s
+    networks:
+      - productivity-os-network
+
+  plane-space:
+    image: makeplane/plane-space:stable
+    container_name: plane-space
+    profiles:
+      - plane
+    restart: unless-stopped
+    ports:
+      - "3003:3000"
+    environment:
+      NEXT_PUBLIC_API_BASE_URL: ${PLANE_API_URL:-http://localhost:8000}
+    depends_on:
+      plane-api:
+        condition: service_healthy
+    networks:
+      - productivity-os-network
+
+  plane-live:
+    image: makeplane/plane-live:stable
+    container_name: plane-live
+    profiles:
+      - plane
+    restart: unless-stopped
+    ports:
+      - "3004:3000"
+    environment:
+      REDIS_URL: redis://productivity-redis:6379/
+    depends_on:
+      productivity-redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:3000/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+    networks:
+      - productivity-os-network
+
+  # ===== Reverse Proxy =====
+  
+  caddy:
+    image: caddy:2-alpine
+    container_name: productivity-caddy
+    profiles:
+      - plane
+      - prod
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ../config/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy-data:/data
+      - caddy-config:/config
+    depends_on:
+      plane-web:
+        condition: service_healthy
+      plane-api:
+        condition: service_healthy
+    networks:
+      - productivity-os-network
+
+# ===== Volumes =====
+volumes:
+  postgres-data:
+    name: productivity-postgres-data
+    driver: local
+
+  redis-data:
+    name: productivity-redis-data
+    driver: local
+
+  rabbitmq-data:
+    name: productivity-rabbitmq-data
+    driver: local
+
+  minio-data:
+    name: productivity-minio-data
+    driver: local
+
+  plane-logs:
+    name: productivity-plane-logs
+    driver: local
+
+  caddy-data:
+    name: productivity-caddy-data
+    driver: local
+
+  caddy-config:
+    name: productivity-caddy-config
+    driver: local
+
+# ===== Networks =====
+networks:
+  productivity-os-network:
+    name: productivity-os-network
+    driver: bridge
