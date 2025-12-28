@@ -142,7 +142,7 @@ Process:
 
 ### With Existing Features
 
-**OmniPlanner (GTD/Eisenhower):**
+**Eisenhower Matrix (GTD/Eisenhower):**
 - Convert tasks to time blocks via API
 - Link time blocks to task IDs
 - Track time spent on tasks

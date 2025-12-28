@@ -1,8 +1,8 @@
 // @ts-nocheck
 /**
- * @fileoverview OmniPlanner routes for integrated GTD & Eisenhower-Kanban task management.
+ * @fileoverview Eisenhower Matrix routes for integrated GTD & Eisenhower-Kanban task management.
  * Provides endpoints for unified task views, GTD processing, Eisenhower matrix, and projects.
- * @module routes/omniplanner
+ * @module routes/eisenhowerMatrix
  */
 
 import express from 'express';
@@ -24,7 +24,7 @@ const calculateQuadrant = (urgency, importance) => {
 };
 
 /**
- * Get OmniPlanner dashboard overview
+ * Get Eisenhower Matrix dashboard overview
  * Returns inbox count, today's tasks, weekly tasks, and project summaries
  */
 router.get('/dashboard', async (req, res) => {

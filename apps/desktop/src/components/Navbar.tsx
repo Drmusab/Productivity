@@ -75,7 +75,7 @@ const Navbar: React.FC = () => {
 
   const navItems = [
     { path: '/vault', icon: <AccountTree />, label: 'خزنة المعرفة' },
-    { path: '/omniplanner', icon: <ViewKanban />, label: 'مخطط شامل' },
+    { path: '/eisenhower-matrix', icon: <ViewKanban />, label: 'مصفوفة أيزنهاور' },
     { path: '/planner', icon: <Today />, label: 'المخطط اليومي' },
     { path: '/boards', icon: <Dashboard />, label: 'اللوحات' },
     { path: '/thoughts', icon: <Psychology />, label: 'الأفكار' },

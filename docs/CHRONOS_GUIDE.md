@@ -155,7 +155,7 @@ curl http://localhost:3001/api/chronos/analytics/weekly \
 
 ## Integration with Other Features
 
-### OmniPlanner Integration
+### Eisenhower Matrix Integration
 - Convert tasks to time blocks automatically
 - Link time blocks to GTD/Eisenhower tasks
 - Track time spent on projects and goals

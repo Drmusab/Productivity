@@ -194,7 +194,7 @@ const initDatabase = (): Promise<void> => {
           FOREIGN KEY (board_id) REFERENCES boards (id) ON DELETE CASCADE
         )`);
 
-        // Projects table for OmniPlanner project management
+        // Projects table for Eisenhower Matrix project management
         await runAsync(`CREATE TABLE IF NOT EXISTS projects (
           id INTEGER PRIMARY KEY AUTOINCREMENT,
           name TEXT NOT NULL,
@@ -1069,7 +1069,7 @@ const initDatabase = (): Promise<void> => {
         await runAsync('CREATE INDEX IF NOT EXISTS idx_fasting_records_date ON fasting_records(date)');
         await runAsync('CREATE INDEX IF NOT EXISTS idx_jumuah_checklist_date ON jumuah_checklist(date)');
         await runAsync('CREATE INDEX IF NOT EXISTS idx_spiritual_reflections_date ON spiritual_reflections(date)');
-        // OmniPlanner indexes - GTD and Eisenhower
+        // Eisenhower Matrix indexes - GTD and Eisenhower
         await runAsync('CREATE INDEX IF NOT EXISTS idx_tasks_gtd_status ON tasks(gtd_status)');
         await runAsync('CREATE INDEX IF NOT EXISTS idx_tasks_execution_status ON tasks(execution_status)');
         await runAsync('CREATE INDEX IF NOT EXISTS idx_tasks_project_id ON tasks(project_id)');
@@ -1284,7 +1284,7 @@ const TABLES_IN_DELETE_ORDER = [
   'swimlanes',
   'columns',
   'boards',
-  // OmniPlanner tables
+  // Eisenhower Matrix tables
   'projects',
   'contacts',
   'automation_rules',

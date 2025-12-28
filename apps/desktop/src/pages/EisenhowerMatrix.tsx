@@ -46,7 +46,7 @@ import {
 
 import { useNotification } from '../contexts/NotificationContext';
 import {
-  getOmniplannerDashboard,
+  getEisenhowerMatrixDashboard,
   getTasksByGTDStatus,
   processInboxTask,
   captureTask,
@@ -57,7 +57,7 @@ import {
   getProjects,
   createProject,
   getCategories,
-} from '../services/omniplannerService';
+} from '../services/eisenhowerMatrixService';
 
 // Eisenhower quadrant configuration
 const QUADRANTS = {
@@ -371,8 +371,8 @@ const ProcessInboxDialog = ({ open, onClose, task, onProcess, projects, contexts
   );
 };
 
-// Main OmniPlanner Component
-const OmniPlanner = () => {
+// Main Eisenhower Matrix Component
+const EisenhowerMatrix = () => {
   const { showError, showSuccess } = useNotification();
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState(0);
@@ -398,7 +398,7 @@ const OmniPlanner = () => {
     try {
       setLoading(true);
       const [dashboardRes, projectsRes, contextsRes, categoriesRes] = await Promise.all([
-        getOmniplannerDashboard(),
+        getEisenhowerMatrixDashboard(),
         getProjects(),
         getContexts(),
         getCategories(),
@@ -513,7 +513,7 @@ const OmniPlanner = () => {
     return (
       <Box sx={{ p: 3 }}>
         <LinearProgress />
-        <Typography align="center" sx={{ mt: 2 }}>Loading OmniPlanner...</Typography>
+        <Typography align="center" sx={{ mt: 2 }}>Loading Eisenhower Matrix...</Typography>
       </Box>
     );
   }
@@ -524,7 +524,7 @@ const OmniPlanner = () => {
       <Paper sx={{ p: 2, mb: 3 }}>
         <Stack direction="row" justifyContent="space-between" alignItems="center">
           <Box>
-            <Typography variant="h4" fontWeight="bold">OmniPlanner</Typography>
+            <Typography variant="h4" fontWeight="bold">Eisenhower Matrix</Typography>
             <Typography variant="subtitle1" color="text.secondary">
               Integrated GTD & Eisenhower-Kanban System
             </Typography>
@@ -1005,4 +1005,4 @@ const OmniPlanner = () => {
   );
 };
 
-export default OmniPlanner;
+export default EisenhowerMatrix;

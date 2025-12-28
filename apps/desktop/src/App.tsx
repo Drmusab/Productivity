@@ -17,7 +17,7 @@ import Habits from './pages/Habits';
 import DailyPlanner from './pages/DailyPlanner';
 import Fitness from './pages/Fitness';
 import Islamic from './pages/Islamic';
-import OmniPlanner from './pages/OmniPlanner';
+import EisenhowerMatrix from './pages/EisenhowerMatrix';
 import Chronos from './pages/Chronos';
 import ThoughtOrganizer from './pages/ThoughtOrganizer';
 import NotesHub from './pages/NotesHub';
@@ -41,7 +41,7 @@ function AppRoutes() {
           <Route path="/login" element={<Login />} />
           <Route path="/boards" element={isAuthenticated ? <Boards /> : <Navigate to="/login" />} />
           <Route path="/board/:id" element={isAuthenticated ? <Board /> : <Navigate to="/login" />} />
-          <Route path="/omniplanner" element={isAuthenticated ? <OmniPlanner /> : <Navigate to="/login" />} />
+          <Route path="/eisenhower-matrix" element={isAuthenticated ? <EisenhowerMatrix /> : <Navigate to="/login" />} />
           <Route path="/planner" element={isAuthenticated ? <DailyPlanner /> : <Navigate to="/login" />} />
           <Route path="/routines" element={isAuthenticated ? <Routines /> : <Navigate to="/login" />} />
           <Route path="/habits" element={isAuthenticated ? <Habits /> : <Navigate to="/login" />} />
