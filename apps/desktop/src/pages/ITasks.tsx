@@ -18,11 +18,12 @@ import {
   CircularProgress,
 } from '@mui/material';
 import { Add, GridView, ViewList, ViewModule } from '@mui/icons-material';
-import { ITasksProvider, useITasks } from '../../packages/modules/itasks/src/context/iTasksContext';
-import { EisenhowerMatrix } from '../../packages/modules/itasks/src/components/EisenhowerMatrix';
-import { TaskTable } from '../../packages/modules/itasks/src/components/TaskTable';
-import { AddTaskForm } from '../../packages/modules/itasks/src/components/AddTaskForm';
-import { mapPriorityToEisenhower } from '../../packages/modules/itasks/src/types';
+
+// Direct imports from source files (module not built yet)
+import { ITasksProvider, useITasks } from '../../../packages/modules/itasks/src/context/iTasksContext';
+import { EisenhowerMatrix } from '../../../packages/modules/itasks/src/components/EisenhowerMatrix';
+import { TaskTable } from '../../../packages/modules/itasks/src/components/TaskTable';
+import { AddTaskForm } from '../../../packages/modules/itasks/src/components/AddTaskForm';
 
 interface TabPanelProps {
   children?: React.ReactNode;
