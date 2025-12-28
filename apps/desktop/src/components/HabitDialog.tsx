@@ -18,12 +18,12 @@ import {
 } from '@mui/material';
 
 const CATEGORIES = [
-  { value: 'health', label: 'Health', color: '#2ecc71' },
-  { value: 'learning', label: 'Learning', color: '#3498db' },
-  { value: 'mindset', label: 'Mindset', color: '#9b59b6' },
-  { value: 'productivity', label: 'Productivity', color: '#e67e22' },
-  { value: 'social', label: 'Social', color: '#e74c3c' },
-  { value: 'general', label: 'General', color: '#95a5a6' },
+  { value: 'health', label: 'الصحة', color: '#2ecc71' },
+  { value: 'learning', label: 'التعلم', color: '#3498db' },
+  { value: 'mindset', label: 'العقلية', color: '#9b59b6' },
+  { value: 'productivity', label: 'الإنتاجية', color: '#e67e22' },
+  { value: 'social', label: 'اجتماعي', color: '#e74c3c' },
+  { value: 'general', label: 'عام', color: '#95a5a6' },
 ];
 
 const COLORS = [
@@ -32,9 +32,9 @@ const COLORS = [
 ];
 
 const GOAL_TYPES = [
-  { value: 'binary', label: 'Yes/No (Done or Not Done)' },
-  { value: 'numeric', label: 'Numeric (e.g., 8 glasses of water)' },
-  { value: 'timer', label: 'Timer (e.g., 30 minutes exercise)' },
+  { value: 'binary', label: 'نعم/لا (منجز أو غير منجز)' },
+  { value: 'numeric', label: 'رقمي (مثل: ٨ أكواب ماء)' },
+  { value: 'timer', label: 'مؤقت (مثل: ٣٠ دقيقة تمرين)' },
 ];
 
 interface HabitValues {
@@ -92,10 +92,10 @@ const HabitDialog: React.FC<HabitDialogProps> = ({ open, onClose, onSave, initia
   const validate = () => {
     const newErrors: any = {};
     if (!name.trim()) {
-      newErrors.name = 'Habit name is required';
+      newErrors.name = 'اسم العادة مطلوب';
     }
     if (goalType !== 'binary' && goalValue < 1) {
-      newErrors.goalValue = 'Goal value must be at least 1';
+      newErrors.goalValue = 'يجب أن تكون قيمة الهدف 1 على الأقل';
     }
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -120,37 +120,37 @@ const HabitDialog: React.FC<HabitDialogProps> = ({ open, onClose, onSave, initia
   return (
     <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth>
       <DialogTitle>
-        {isEditing ? 'Edit Habit' : 'Add New Habit'}
+        {isEditing ? 'تعديل عادة' : 'إضافة عادة جديدة'}
       </DialogTitle>
       <DialogContent>
         <Stack spacing={2} sx={{ mt: 1 }}>
           <TextField
-            label="Habit Name"
+            label="اسم العادة"
             value={name}
             onChange={(e) => setName(e.target.value)}
             fullWidth
             required
             error={Boolean(errors.name)}
             helperText={errors.name}
-            placeholder="e.g., Drink 8 glasses of water"
+            placeholder="مثال: شرب ٨ أكواب ماء"
           />
 
           <TextField
-            label="Description (optional)"
+            label="الوصف (اختياري)"
             value={description}
             onChange={(e) => setDescription(e.target.value)}
             fullWidth
             multiline
             rows={2}
-            placeholder="Add details about this habit..."
+            placeholder="أضف تفاصيل عن هذه العادة..."
           />
 
           <FormControl fullWidth>
-            <InputLabel>Category</InputLabel>
+            <InputLabel>التصنيف</InputLabel>
             <Select
               value={category}
               onChange={(e) => setCategory(e.target.value)}
-              label="Category"
+              label="التصنيف"
             >
               {CATEGORIES.map((cat) => (
                 <MenuItem key={cat.value} value={cat.value}>
@@ -171,11 +171,11 @@ const HabitDialog: React.FC<HabitDialogProps> = ({ open, onClose, onSave, initia
           </FormControl>
 
           <FormControl fullWidth>
-            <InputLabel>Goal Type</InputLabel>
+            <InputLabel>نوع الهدف</InputLabel>
             <Select
               value={goalType}
               onChange={(e) => setGoalType(e.target.value)}
-              label="Goal Type"
+              label="نوع الهدف"
             >
               {GOAL_TYPES.map((type) => (
                 <MenuItem key={type.value} value={type.value}>
@@ -184,16 +184,16 @@ const HabitDialog: React.FC<HabitDialogProps> = ({ open, onClose, onSave, initia
               ))}
             </Select>
             <FormHelperText>
-              {goalType === 'binary' && 'Simple yes/no tracking for habit completion'}
-              {goalType === 'numeric' && 'Track a specific quantity (e.g., glasses of water)'}
-              {goalType === 'timer' && 'Track time spent (in minutes)'}
+              {goalType === 'binary' && 'تتبع بسيط بنعم/لا لإكمال العادة'}
+              {goalType === 'numeric' && 'تتبع كمية محددة (مثلاً: أكواب ماء)'}
+              {goalType === 'timer' && 'تتبع الوقت المستغرق (بالدقائق)'}
             </FormHelperText>
           </FormControl>
 
           {goalType !== 'binary' && (
             <Box sx={{ display: 'flex', gap: 2 }}>
               <TextField
-                label="Goal Value"
+                label="قيمة الهدف"
                 type="number"
                 value={goalValue}
                 onChange={(e) => setGoalValue(parseInt(e.target.value) || 1)}
@@ -203,17 +203,17 @@ const HabitDialog: React.FC<HabitDialogProps> = ({ open, onClose, onSave, initia
                 sx={{ flex: 1 }}
               />
               <TextField
-                label="Unit"
+                label="الوحدة"
                 value={goalUnit}
                 onChange={(e) => setGoalUnit(e.target.value)}
-                placeholder={goalType === 'timer' ? 'minutes' : 'glasses'}
+                placeholder={goalType === 'timer' ? 'دقائق' : 'أكواب'}
                 sx={{ flex: 1 }}
               />
             </Box>
           )}
 
           <Box>
-            <InputLabel sx={{ mb: 1 }}>Color</InputLabel>
+            <InputLabel sx={{ mb: 1 }}>اللون</InputLabel>
             <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
               {COLORS.map((c) => (
                 <Chip
@@ -235,9 +235,9 @@ const HabitDialog: React.FC<HabitDialogProps> = ({ open, onClose, onSave, initia
         </Stack>
       </DialogContent>
       <DialogActions>
-        <Button onClick={onClose}>Cancel</Button>
+        <Button onClick={onClose}>إلغاء</Button>
         <Button onClick={handleSubmit} variant="contained" color="primary">
-          {isEditing ? 'Save Changes' : 'Add Habit'}
+          {isEditing ? 'حفظ التعديلات' : 'إضافة عادة'}
         </Button>
       </DialogActions>
     </Dialog>
