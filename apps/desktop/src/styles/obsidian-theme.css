@@ -1,0 +1,548 @@
+/**
+ * Obsidian.md-inspired theme
+ * Minimalist, industrial, distraction-free aesthetic
+ */
+
+:root {
+  /* Primary Colors - Obsidian Dark Mode */
+  --obsidian-bg-primary: #1e1e1e;
+  --obsidian-bg-sidebar: #171717;
+  --obsidian-bg-secondary: #252525;
+  --obsidian-border: #2f2f2f;
+  --obsidian-text-primary: #dcddde;
+  --obsidian-text-secondary: #999999;
+  --obsidian-text-muted: #666666;
+  --obsidian-accent: #7531f3;
+  --obsidian-accent-hover: #8b4bff;
+  --obsidian-accent-dark: #5e1fd3;
+  
+  /* UI Element Colors */
+  --obsidian-hover: rgba(255, 255, 255, 0.05);
+  --obsidian-active: rgba(255, 255, 255, 0.1);
+  --obsidian-selection: rgba(117, 49, 243, 0.2);
+  
+  /* Scrollbar */
+  --obsidian-scrollbar-bg: transparent;
+  --obsidian-scrollbar-thumb: #3a3a3a;
+  --obsidian-scrollbar-thumb-hover: #4a4a4a;
+  
+  /* Typography */
+  --font-ui: 'Inter', 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-mono: 'JetBrains Mono', 'Fira Code', 'Consolas', monospace;
+  
+  /* Spacing */
+  --spacing-xs: 4px;
+  --spacing-sm: 8px;
+  --spacing-md: 16px;
+  --spacing-lg: 24px;
+  --spacing-xl: 32px;
+  
+  /* Layout dimensions */
+  --ribbon-width: 50px;
+  --sidebar-width: 280px;
+  --sidebar-collapsed: 0px;
+  --gutter-width: 4px;
+  --statusbar-height: 24px;
+  --tab-height: 36px;
+}
+
+/* Obsidian Layout Container */
+.obsidian-layout {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  background: var(--obsidian-bg-primary);
+  color: var(--obsidian-text-primary);
+  font-family: var(--font-ui);
+  overflow: hidden;
+}
+
+/* Main workspace area (below any top navigation) */
+.obsidian-workspace {
+  display: flex;
+  flex: 1;
+  overflow: hidden;
+  position: relative;
+}
+
+/* Left Ribbon - slim icon bar */
+.obsidian-ribbon {
+  width: var(--ribbon-width);
+  background: var(--obsidian-bg-sidebar);
+  border-right: 1px solid var(--obsidian-border);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: var(--spacing-sm) 0;
+  gap: var(--spacing-xs);
+  z-index: 100;
+}
+
+.obsidian-ribbon-button {
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+  cursor: pointer;
+  color: var(--obsidian-text-secondary);
+  transition: all 0.15s ease;
+  background: transparent;
+  border: none;
+}
+
+.obsidian-ribbon-button:hover {
+  background: var(--obsidian-hover);
+  color: var(--obsidian-text-primary);
+}
+
+.obsidian-ribbon-button.active {
+  background: var(--obsidian-active);
+  color: var(--obsidian-accent);
+}
+
+/* Left Sidebar - file explorer */
+.obsidian-sidebar-left {
+  width: var(--sidebar-width);
+  background: var(--obsidian-bg-sidebar);
+  border-right: 1px solid var(--obsidian-border);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  transition: width 0.2s ease, margin-left 0.2s ease;
+  z-index: 90;
+}
+
+.obsidian-sidebar-left.collapsed {
+  width: 0;
+  margin-left: calc(-1 * var(--sidebar-width));
+}
+
+.obsidian-sidebar-header {
+  padding: var(--spacing-md);
+  border-bottom: 1px solid var(--obsidian-border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 48px;
+}
+
+.obsidian-sidebar-title {
+  font-size: 13px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--obsidian-text-muted);
+}
+
+.obsidian-sidebar-content {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+/* Right Sidebar - metadata/outline */
+.obsidian-sidebar-right {
+  width: var(--sidebar-width);
+  background: var(--obsidian-bg-sidebar);
+  border-left: 1px solid var(--obsidian-border);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  transition: width 0.2s ease, margin-right 0.2s ease;
+  z-index: 90;
+}
+
+.obsidian-sidebar-right.collapsed {
+  width: 0;
+  margin-right: calc(-1 * var(--sidebar-width));
+}
+
+/* Main editor area */
+.obsidian-main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background: var(--obsidian-bg-primary);
+}
+
+/* Tab bar */
+.obsidian-tabs {
+  display: flex;
+  align-items: flex-end;
+  background: var(--obsidian-bg-secondary);
+  border-bottom: 1px solid var(--obsidian-border);
+  overflow-x: auto;
+  overflow-y: hidden;
+  min-height: var(--tab-height);
+  padding: 0 var(--spacing-sm);
+}
+
+.obsidian-tab {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  padding: 0 var(--spacing-md);
+  height: var(--tab-height);
+  background: transparent;
+  border: none;
+  border-top-left-radius: 6px;
+  border-top-right-radius: 6px;
+  color: var(--obsidian-text-secondary);
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  white-space: nowrap;
+  position: relative;
+}
+
+.obsidian-tab:hover {
+  background: var(--obsidian-hover);
+  color: var(--obsidian-text-primary);
+}
+
+.obsidian-tab.active {
+  background: var(--obsidian-bg-primary);
+  color: var(--obsidian-text-primary);
+  border-bottom: 2px solid var(--obsidian-accent);
+}
+
+.obsidian-tab-close {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  border-radius: 2px;
+  opacity: 0;
+  transition: opacity 0.15s ease;
+}
+
+.obsidian-tab:hover .obsidian-tab-close {
+  opacity: 1;
+}
+
+.obsidian-tab-close:hover {
+  background: var(--obsidian-hover);
+}
+
+/* Editor content */
+.obsidian-editor {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: var(--spacing-xl);
+  display: flex;
+  justify-content: center;
+}
+
+.obsidian-editor-content {
+  width: 100%;
+  max-width: 750px;
+  color: var(--obsidian-text-primary);
+  line-height: 1.6;
+}
+
+/* Markdown styling */
+.obsidian-editor-content h1 {
+  font-size: 2em;
+  font-weight: 700;
+  margin: 1em 0 0.5em;
+  color: var(--obsidian-text-primary);
+  letter-spacing: -0.02em;
+}
+
+.obsidian-editor-content h2 {
+  font-size: 1.5em;
+  font-weight: 600;
+  margin: 0.8em 0 0.4em;
+  color: var(--obsidian-text-primary);
+  letter-spacing: -0.015em;
+}
+
+.obsidian-editor-content h3 {
+  font-size: 1.25em;
+  font-weight: 600;
+  margin: 0.6em 0 0.3em;
+  color: var(--obsidian-text-primary);
+}
+
+.obsidian-editor-content p {
+  margin: 0.5em 0;
+}
+
+.obsidian-editor-content code {
+  font-family: var(--font-mono);
+  background: var(--obsidian-bg-secondary);
+  padding: 2px 6px;
+  border-radius: 3px;
+  font-size: 0.9em;
+}
+
+.obsidian-editor-content pre {
+  font-family: var(--font-mono);
+  background: var(--obsidian-bg-secondary);
+  padding: var(--spacing-md);
+  border-radius: 6px;
+  overflow-x: auto;
+  margin: 1em 0;
+}
+
+/* File explorer tree */
+.obsidian-file-tree {
+  padding: var(--spacing-sm) 0;
+}
+
+.obsidian-file-item {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+  padding: var(--spacing-xs) var(--spacing-md);
+  cursor: pointer;
+  color: var(--obsidian-text-secondary);
+  font-size: 13px;
+  transition: all 0.15s ease;
+  user-select: none;
+}
+
+.obsidian-file-item:hover {
+  background: var(--obsidian-hover);
+  color: var(--obsidian-text-primary);
+}
+
+.obsidian-file-item.active {
+  background: var(--obsidian-active);
+  color: var(--obsidian-accent);
+}
+
+.obsidian-file-item.folder {
+  font-weight: 500;
+}
+
+.obsidian-file-chevron {
+  width: 16px;
+  height: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.15s ease;
+}
+
+.obsidian-file-chevron.expanded {
+  transform: rotate(90deg);
+}
+
+.obsidian-file-icon {
+  width: 16px;
+  height: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--obsidian-text-muted);
+}
+
+.obsidian-file-children {
+  padding-left: var(--spacing-md);
+}
+
+/* Resizable gutters */
+.obsidian-gutter {
+  width: var(--gutter-width);
+  background: transparent;
+  cursor: col-resize;
+  position: relative;
+  z-index: 95;
+  transition: background 0.15s ease;
+}
+
+.obsidian-gutter:hover,
+.obsidian-gutter.dragging {
+  background: var(--obsidian-accent);
+}
+
+/* Status bar */
+.obsidian-statusbar {
+  height: var(--statusbar-height);
+  background: var(--obsidian-bg-secondary);
+  border-top: 1px solid var(--obsidian-border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 var(--spacing-md);
+  font-size: 11px;
+  color: var(--obsidian-text-muted);
+  z-index: 100;
+}
+
+.obsidian-statusbar-left,
+.obsidian-statusbar-right {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-md);
+}
+
+.obsidian-statusbar-item {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+  cursor: default;
+}
+
+.obsidian-statusbar-item.clickable {
+  cursor: pointer;
+  transition: color 0.15s ease;
+}
+
+.obsidian-statusbar-item.clickable:hover {
+  color: var(--obsidian-text-primary);
+}
+
+/* Custom scrollbars */
+.obsidian-sidebar-content::-webkit-scrollbar,
+.obsidian-editor::-webkit-scrollbar,
+.obsidian-tabs::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+.obsidian-sidebar-content::-webkit-scrollbar-track,
+.obsidian-editor::-webkit-scrollbar-track,
+.obsidian-tabs::-webkit-scrollbar-track {
+  background: var(--obsidian-scrollbar-bg);
+}
+
+.obsidian-sidebar-content::-webkit-scrollbar-thumb,
+.obsidian-editor::-webkit-scrollbar-thumb,
+.obsidian-tabs::-webkit-scrollbar-thumb {
+  background: var(--obsidian-scrollbar-thumb);
+  border-radius: 4px;
+}
+
+.obsidian-sidebar-content::-webkit-scrollbar-thumb:hover,
+.obsidian-editor::-webkit-scrollbar-thumb:hover,
+.obsidian-tabs::-webkit-scrollbar-thumb:hover {
+  background: var(--obsidian-scrollbar-thumb-hover);
+}
+
+/* Mobile responsiveness */
+@media (max-width: 768px) {
+  :root {
+    --ribbon-width: 0px;
+    --sidebar-width: 100%;
+  }
+  
+  .obsidian-ribbon {
+    display: none;
+  }
+  
+  .obsidian-sidebar-left,
+  .obsidian-sidebar-right {
+    position: absolute;
+    top: 0;
+    bottom: var(--statusbar-height);
+    z-index: 200;
+    box-shadow: 2px 0 8px rgba(0, 0, 0, 0.5);
+  }
+  
+  .obsidian-sidebar-left {
+    left: 0;
+  }
+  
+  .obsidian-sidebar-right {
+    right: 0;
+  }
+  
+  .obsidian-sidebar-left.collapsed {
+    transform: translateX(-100%);
+    margin-left: 0;
+  }
+  
+  .obsidian-sidebar-right.collapsed {
+    transform: translateX(100%);
+    margin-right: 0;
+  }
+}
+
+/* Search input styling */
+.obsidian-search {
+  width: 100%;
+  padding: var(--spacing-sm) var(--spacing-md);
+  background: var(--obsidian-bg-primary);
+  border: 1px solid var(--obsidian-border);
+  border-radius: 6px;
+  color: var(--obsidian-text-primary);
+  font-size: 13px;
+  font-family: var(--font-ui);
+  transition: all 0.15s ease;
+}
+
+.obsidian-search:focus {
+  outline: none;
+  border-color: var(--obsidian-accent);
+  box-shadow: 0 0 0 2px var(--obsidian-selection);
+}
+
+.obsidian-search::placeholder {
+  color: var(--obsidian-text-muted);
+}
+
+/* Button styling */
+.obsidian-button {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+  padding: var(--spacing-sm) var(--spacing-md);
+  background: transparent;
+  border: 1px solid var(--obsidian-border);
+  border-radius: 6px;
+  color: var(--obsidian-text-primary);
+  font-size: 13px;
+  font-family: var(--font-ui);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.obsidian-button:hover {
+  background: var(--obsidian-hover);
+  border-color: var(--obsidian-accent);
+}
+
+.obsidian-button.primary {
+  background: var(--obsidian-accent);
+  border-color: var(--obsidian-accent);
+  color: white;
+}
+
+.obsidian-button.primary:hover {
+  background: var(--obsidian-accent-hover);
+  border-color: var(--obsidian-accent-hover);
+}
+
+/* Icon button */
+.obsidian-icon-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  background: transparent;
+  border: none;
+  border-radius: 4px;
+  color: var(--obsidian-text-secondary);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.obsidian-icon-button:hover {
+  background: var(--obsidian-hover);
+  color: var(--obsidian-text-primary);
+}
+
+/* Divider */
+.obsidian-divider {
+  height: 1px;
+  background: var(--obsidian-border);
+  margin: var(--spacing-sm) 0;
+}

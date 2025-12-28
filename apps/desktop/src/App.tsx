@@ -25,6 +25,7 @@ import IdeaTracker from './pages/IdeaTracker';
 import WritingHub from './pages/WritingHub';
 import Utilities from './pages/Utilities';
 import KnowledgeVault from './pages/KnowledgeVault';
+import ObsidianDemo from './pages/ObsidianDemo';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { NotificationProvider } from './contexts/NotificationContext';
 import { ThemeProvider, useTheme } from './contexts/ThemeContext';
@@ -53,6 +54,7 @@ function AppRoutes() {
           <Route path="/writing" element={isAuthenticated ? <WritingHub /> : <Navigate to="/login" />} />
           <Route path="/utilities" element={isAuthenticated ? <Utilities /> : <Navigate to="/login" />} />
           <Route path="/vault" element={isAuthenticated ? <KnowledgeVault /> : <Navigate to="/login" />} />
+          <Route path="/obsidian" element={<ObsidianDemo />} />
           <Route path="/settings" element={isAuthenticated ? <Settings /> : <Navigate to="/login" />} />
           <Route path="/analytics" element={isAuthenticated ? <Analytics /> : <Navigate to="/login" />} />
           <Route path="/calendar" element={isAuthenticated ? <Calendar /> : <Navigate to="/login" />} />
