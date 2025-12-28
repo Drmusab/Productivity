@@ -46,6 +46,8 @@ interface TaskCardProps {
 
 export const TaskCard: React.FC<TaskCardProps> = ({ task }) => {
   const handleDragStart = (e: React.DragEvent) => {
+    if (!task.id) return;
+
     e.dataTransfer.setData('taskId', task.id);
   };
 
