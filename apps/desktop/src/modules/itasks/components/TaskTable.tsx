@@ -63,6 +63,8 @@ export const TaskTable: React.FC<TaskTableProps> = ({
   const [editValues, setEditValues] = useState<Partial<TaskWithEisenhower>>({});
 
   const handleEditStart = (task: TaskWithEisenhower) => {
+    if (!task.id) return;
+
     setEditingId(task.id);
     setEditValues({
       title: task.title,
@@ -78,6 +80,8 @@ export const TaskTable: React.FC<TaskTableProps> = ({
   };
 
   const handleEditSave = (id: string) => {
+    if (!id) return;
+
     onUpdate(id, editValues);
     setEditingId(null);
     setEditValues({});
@@ -107,8 +111,9 @@ export const TaskTable: React.FC<TaskTableProps> = ({
           ) : (
             tasks.map((task) => {
               const isEditing = editingId === task.id;
+              const taskKey = task.id ?? task.title;
               return (
-                <TableRow key={task.id} hover>
+                <TableRow key={taskKey} hover>
                   <TableCell>
                     {isEditing ? (
                       <TextField
@@ -216,7 +221,8 @@ export const TaskTable: React.FC<TaskTableProps> = ({
                             <IconButton
                               size="small"
                               color="primary"
-                              onClick={() => handleEditSave(task.id)}
+                              disabled={!task.id}
+                              onClick={() => task.id && handleEditSave(task.id)}
                             >
                               <Save />
                             </IconButton>
@@ -242,7 +248,8 @@ export const TaskTable: React.FC<TaskTableProps> = ({
                             <IconButton
                               size="small"
                               color="info"
-                              onClick={() => onDuplicate(task.id)}
+                              disabled={!task.id}
+                              onClick={() => task.id && onDuplicate(task.id)}
                             >
                               <ContentCopy />
                             </IconButton>
@@ -251,7 +258,8 @@ export const TaskTable: React.FC<TaskTableProps> = ({
                             <IconButton
                               size="small"
                               color="error"
-                              onClick={() => onDelete(task.id)}
+                              disabled={!task.id}
+                              onClick={() => task.id && onDelete(task.id)}
                             >
                               <Delete />
                             </IconButton>
