@@ -40,6 +40,9 @@ import {
   LocalFireDepartment,
 } from '@mui/icons-material';
 import dayjs from 'dayjs';
+import 'dayjs/locale/ar';
+
+dayjs.locale('ar');
 
 import {
   getHabits,
@@ -64,25 +67,25 @@ const StatusIcon = ({ status, onClick, disabled = false }) => {
   switch (status) {
     case 'done':
       return (
-        <Tooltip title="Done - Click to change">
+        <Tooltip title="مكتمل - اضغط للتغيير">
           <CheckCircle {...iconProps} sx={{ ...iconProps.sx, color: '#2ecc71' }} />
         </Tooltip>
       );
     case 'missed':
       return (
-        <Tooltip title="Missed - Click to change">
+        <Tooltip title="فاتك - اضغط للتغيير">
           <Cancel {...iconProps} sx={{ ...iconProps.sx, color: '#e74c3c' }} />
         </Tooltip>
       );
     case 'skipped':
       return (
-        <Tooltip title="Skipped - Click to change">
+        <Tooltip title="تم التجاوز - اضغط للتغيير">
           <PauseCircle {...iconProps} sx={{ ...iconProps.sx, color: '#f39c12' }} />
         </Tooltip>
       );
     default:
       return (
-        <Tooltip title="Not logged - Click to mark">
+        <Tooltip title="غير مسجل - اضغط للتحديد">
           <RadioButtonUnchecked {...iconProps} sx={{ ...iconProps.sx, color: '#bdc3c7' }} />
         </Tooltip>
       );
@@ -148,7 +151,7 @@ const Habits = () => {
       setWeeklySummary(weeklyRes.data);
       setMonthlySummary(monthlyRes.data);
     } catch (error) {
-      showError('Failed to load habits data');
+      showError('فشل تحميل بيانات العادات');
     } finally {
       setLoading(false);
     }
@@ -162,26 +165,26 @@ const Habits = () => {
     try {
       if (editingHabit) {
         await updateHabit(editingHabit.id, payload);
-        showSuccess('Habit updated successfully');
+        showSuccess('تم تحديث العادة بنجاح');
       } else {
         await createHabit(payload);
-        showSuccess('Habit created successfully');
+        showSuccess('تم إنشاء العادة بنجاح');
       }
       setDialogOpen(false);
       setEditingHabit(null);
       loadData();
     } catch (error) {
-      showError('Failed to save habit');
+      showError('فشل حفظ العادة');
     }
   };
 
   const handleDeleteHabit = async (habit) => {
     try {
       await deleteHabit(habit.id);
-      showSuccess('Habit deleted');
+      showSuccess('تم حذف العادة');
       loadData();
     } catch (error) {
-      showError('Failed to delete habit');
+      showError('فشل حذف العادة');
     }
     handleCloseMenu();
   };
@@ -189,10 +192,10 @@ const Habits = () => {
   const handleArchiveHabit = async (habit) => {
     try {
       await archiveHabit(habit.id, !habit.archived);
-      showSuccess(habit.archived ? 'Habit restored' : 'Habit archived');
+      showSuccess(habit.archived ? 'تم استعادة العادة' : 'تم أرشفة العادة');
       loadData();
     } catch (error) {
-      showError('Failed to archive habit');
+      showError('فشل أرشفة العادة');
     }
     handleCloseMenu();
   };
@@ -205,7 +208,7 @@ const Habits = () => {
       await logHabit(habitId, date, nextStatus);
       loadData(); // Refresh data after logging
     } catch (error) {
-      showError('Failed to log habit');
+      showError('فشل تسجيل حالة العادة');
     }
   };
 
@@ -234,7 +237,7 @@ const Habits = () => {
   // Render This Week view
   const renderWeeklyView = () => {
     if (!weeklySummary) {
-      return <Typography>Loading weekly summary...</Typography>;
+      return <Typography>جاري تحميل ملخص الأسبوع...</Typography>;
     }
 
     const { weekDays, habits: habitSummaries, dailyAverages, weekAverage } = weeklySummary;
@@ -245,7 +248,7 @@ const Habits = () => {
         <Table size="small">
           <TableHead>
             <TableRow>
-              <TableCell sx={{ minWidth: 180, fontWeight: 'bold' }}>Habit</TableCell>
+              <TableCell sx={{ minWidth: 180, fontWeight: 'bold' }}>العادة</TableCell>
               {weekDays.map((dateStr) => {
                 const { day, date, month, isToday } = formatDayHeader(dateStr);
                 return (
@@ -268,7 +271,7 @@ const Habits = () => {
                 );
               })}
               <TableCell align="center" sx={{ minWidth: 150, fontWeight: 'bold' }}>
-                Week Progress
+                تقدم الأسبوع
               </TableCell>
             </TableRow>
           </TableHead>
@@ -397,7 +400,7 @@ const Habits = () => {
 
                     <Box>
                       <Typography variant="body2" color="text.secondary" gutterBottom>
-                        Monthly Progress
+                        التقدم الشهري
                       </Typography>
                       <ProgressBar value={habit.monthlyPercentage} color={habit.color} height={12} />
                     </Box>
@@ -405,19 +408,19 @@ const Habits = () => {
                     <Stack direction="row" spacing={2} flexWrap="wrap">
                       <Chip
                         icon={<LocalFireDepartment />}
-                        label={`Current: ${habit.currentStreak} days`}
+                        label={`الحالي: ${habit.currentStreak} يوم`}
                         size="small"
                         color={habit.currentStreak > 0 ? 'warning' : 'default'}
                       />
                       <Chip
                         icon={<TrendingUp />}
-                        label={`Best: ${habit.longestStreak} days`}
+                        label={`الأفضل: ${habit.longestStreak} يوم`}
                         size="small"
                         color="primary"
                         variant="outlined"
                       />
                       <Chip
-                        label={`${habit.completed}/${habit.total} days`}
+                        label={`${habit.completed}/${habit.total} يوم`}
                         size="small"
                         variant="outlined"
                       />
@@ -430,7 +433,7 @@ const Habits = () => {
           {habitStats.length === 0 && (
             <Grid item xs={12}>
               <Typography color="text.secondary" align="center">
-                No habits created yet. Add your first habit to start tracking!
+                لا توجد عادات بعد. أضف عادتك الأولى للبدء بالمتابعة!
               </Typography>
             </Grid>
           )}
@@ -444,9 +447,9 @@ const Habits = () => {
       {/* Header */}
       <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 3 }}>
         <Box>
-          <Typography variant="h4">Habits</Typography>
+          <Typography variant="h4">العادات</Typography>
           <Typography color="text.secondary">
-            Track your daily habits and build consistency
+            تابع عاداتك اليومية وابنِ الاستمرارية
           </Typography>
         </Box>
         <Button
@@ -457,15 +460,15 @@ const Habits = () => {
             setDialogOpen(true);
           }}
         >
-          Add Habit
+          إضافة عادة
         </Button>
       </Stack>
 
       {/* View Tabs */}
       <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 2 }}>
         <Tabs value={activeTab} onChange={(e, v) => setActiveTab(v)}>
-          <Tab label="This Week" />
-          <Tab label="Monthly Overview" />
+          <Tab label="هذا الأسبوع" />
+          <Tab label="نظرة شهرية" />
         </Tabs>
       </Box>
 
@@ -474,7 +477,7 @@ const Habits = () => {
         <Box sx={{ py: 4 }}>
           <LinearProgress />
           <Typography align="center" sx={{ mt: 2 }}>
-            Loading habits...
+            جاري تحميل العادات...
           </Typography>
         </Box>
       ) : (
@@ -507,19 +510,19 @@ const Habits = () => {
           <ListItemIcon>
             <Edit fontSize="small" />
           </ListItemIcon>
-          <ListItemText>Edit</ListItemText>
+          <ListItemText>تعديل</ListItemText>
         </MenuItem>
         <MenuItem onClick={() => handleArchiveHabit(menuHabit)}>
           <ListItemIcon>
             <Archive fontSize="small" />
           </ListItemIcon>
-          <ListItemText>{menuHabit?.archived ? 'Restore' : 'Archive'}</ListItemText>
+          <ListItemText>{menuHabit?.archived ? 'استعادة' : 'أرشفة'}</ListItemText>
         </MenuItem>
         <MenuItem onClick={() => handleDeleteHabit(menuHabit)}>
           <ListItemIcon>
             <Delete fontSize="small" color="error" />
           </ListItemIcon>
-          <ListItemText sx={{ color: 'error.main' }}>Delete</ListItemText>
+          <ListItemText sx={{ color: 'error.main' }}>حذف</ListItemText>
         </MenuItem>
       </Menu>
     </Box>

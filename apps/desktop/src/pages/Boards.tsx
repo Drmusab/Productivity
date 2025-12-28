@@ -120,7 +120,7 @@ const Boards = () => {
   const handleDuplicateBoard = async (boardId) => {
     try {
       const board = boards.find(b => b.id === boardId);
-      await duplicateBoard(boardId, `${board.name} (Copy)`, user.id);
+      await duplicateBoard(boardId, `${board.name} (نسخة)`, user.id);
 
       showSuccess('تم نسخ اللوحة بنجاح');
       
