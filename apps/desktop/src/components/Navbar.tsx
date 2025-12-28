@@ -36,6 +36,7 @@ import {
   Edit,
   Build,
   AccountTree,
+  Assignment,
 } from '@mui/icons-material';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
@@ -76,6 +77,7 @@ const Navbar: React.FC = () => {
   const navItems = [
     { path: '/vault', icon: <AccountTree />, label: 'خزنة المعرفة' },
     { path: '/omniplanner', icon: <ViewKanban />, label: 'مخطط شامل' },
+    { path: '/itasks', icon: <Assignment />, label: 'المهام' },
     { path: '/planner', icon: <Today />, label: 'المخطط اليومي' },
     { path: '/boards', icon: <Dashboard />, label: 'اللوحات' },
     { path: '/thoughts', icon: <Psychology />, label: 'الأفكار' },

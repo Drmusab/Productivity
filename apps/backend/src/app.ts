@@ -42,6 +42,7 @@ import writingRoutes from './routes/writing';
 import utilitiesRoutes from './routes/utilities';
 import aiNotesRoutes from './routes/aiNotes';
 import knowledgeVaultRoutes from './routes/knowledgeVault';
+import iTasksRoutes from './routes/itasks';
 import {  startScheduler  } from './services/scheduler';
 import {  requestTimer  } from './middleware/performance';
 import logger from './utils/logger';
@@ -197,6 +198,7 @@ app.use('/api/writing', writingRoutes);
 app.use('/api/utilities', utilitiesRoutes);
 app.use('/api/ai-notes', aiNotesRoutes);
 app.use('/api/vault', knowledgeVaultRoutes);
+app.use('/api/itasks', iTasksRoutes);
 
 import {  errorHandler  } from './middleware/errorHandler';
 

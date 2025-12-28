@@ -26,6 +26,7 @@ import WritingHub from './pages/WritingHub';
 import Utilities from './pages/Utilities';
 import KnowledgeVault from './pages/KnowledgeVault';
 import ObsidianDemo from './pages/ObsidianDemo';
+import ITasks from './pages/ITasks';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { NotificationProvider } from './contexts/NotificationContext';
 import { ThemeProvider, useTheme } from './contexts/ThemeContext';
@@ -42,6 +43,7 @@ function AppRoutes() {
           <Route path="/boards" element={isAuthenticated ? <Boards /> : <Navigate to="/login" />} />
           <Route path="/board/:id" element={isAuthenticated ? <Board /> : <Navigate to="/login" />} />
           <Route path="/omniplanner" element={isAuthenticated ? <OmniPlanner /> : <Navigate to="/login" />} />
+          <Route path="/itasks" element={isAuthenticated ? <ITasks /> : <Navigate to="/login" />} />
           <Route path="/planner" element={isAuthenticated ? <DailyPlanner /> : <Navigate to="/login" />} />
           <Route path="/routines" element={isAuthenticated ? <Routines /> : <Navigate to="/login" />} />
           <Route path="/habits" element={isAuthenticated ? <Habits /> : <Navigate to="/login" />} />
