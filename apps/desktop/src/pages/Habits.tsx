@@ -41,21 +41,20 @@ import {
 } from '@mui/icons-material';
 import dayjs from 'dayjs';
 import 'dayjs/locale/ar';
-
-dayjs.locale('ar');
-
-import {
-  getHabits,
-  createHabit,
-  updateHabit,
-  deleteHabit,
-  archiveHabit,
-  logHabit,
-  getWeeklySummary,
-  getMonthlySummary,
-} from '../services/habitService';
 import HabitDialog from '../components/HabitDialog';
 import { useNotification } from '../contexts/NotificationContext';
+import {
+  archiveHabit,
+  createHabit,
+  deleteHabit,
+  getHabits,
+  getMonthlySummary,
+  getWeeklySummary,
+  logHabit,
+  updateHabit,
+} from '../services/habitService';
+
+dayjs.locale('ar');
 
 // Status icons mapping
 const StatusIcon = ({ status, onClick, disabled = false }) => {
